@@ -1,0 +1,4 @@
+[flake8]
+max-line-length = 130
+indent-size = 4
+exclude = .git,__pycache__,venv,env,*.egg-info,build,dist
