@@ -1,5 +1,5 @@
 from passlib.context import CryptContext
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import jwt
 
 from app.interfaces.security_interface import ISecurityService
@@ -21,7 +21,7 @@ class SecurityService(ISecurityService):
 
     def create_access_token(self, data: dict, expires_delta: timedelta = None):
         to_encode = data.copy()
-        expire = datetime.now(datetime.timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+        expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
         to_encode.update({"exp": expire})
         return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
