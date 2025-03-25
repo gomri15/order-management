@@ -1,11 +1,10 @@
-# app/services/product_service.py
-
 from sqlalchemy.orm import Session
 from uuid import UUID
-from fastapi import HTTPException, status
 
+from app.core.errors import NotFoundError
 from app.db.models import Product
 from app.schemas.products import ProductCreate, ProductUpdate
+
 
 class ProductService:
     def __init__(self, db: Session):
@@ -21,7 +20,7 @@ class ProductService:
     def get_product(self, product_id: UUID) -> Product:
         product = self.db.query(Product).filter(Product.id == product_id).first()
         if not product:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+            raise NotFoundError(f"Product with id {product_id} not found.")
         return product
 
     def update_product(self, product_id: UUID, updates: ProductUpdate) -> Product:

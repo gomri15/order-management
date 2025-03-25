@@ -1,7 +1,9 @@
+from fastapi import HTTPException
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 import jwt
 
+from app.core.errors import TokenDecodeError
 from app.interfaces.security_interface import ISecurityService
 
 SECRET_KEY = "your_secret_key"
@@ -25,7 +27,11 @@ class SecurityService(ISecurityService):
         to_encode.update({"exp": expire})
         return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-# FastAPI dependency function
+    def decode_access_token(self, token: str) -> dict:
+        try:
+            return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        except jwt.PyJWTError as e:
+            raise TokenDecodeError("Invalid JWT token") from e
 
 
 def get_security_service():

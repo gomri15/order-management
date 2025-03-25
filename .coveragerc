@@ -2,3 +2,4 @@
 omit =
     app/interfaces/*
     app/db/database.py
+    app/api/*

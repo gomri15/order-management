@@ -22,14 +22,13 @@ class UserService:
         user = self.db.query(User).filter(User.email == login_data.email).first()
         if not user or not self.security_service.verify_password(login_data.password, user.hashed_password):
             return None
-        return self.security_service.create_access_token({"sub": user.email})
+        return self.security_service.create_access_token({"sub": str(user.id)})
 
     def update_user(self, user_id: str, updated_data: UserUpdate):
         user_to_update = self.db.query(User).filter(User.id == user_id).first()
         user_to_update.name = updated_data.name
         self.db.commit()
         self.db.refresh(user_to_update)
-        
+
     def get_user(self, user_id: UUID) -> UserResponse:
         return self.db.query(User).filter(User.id == user_id).first()
-        

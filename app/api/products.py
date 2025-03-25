@@ -1,9 +1,8 @@
-# app/api/routes/product.py
-
 import uuid
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.errors import NotFoundError
 from app.db.database import get_db
 from app.schemas.products import ProductCreate, ProductRead, ProductUpdate
 from app.services.products import ProductService
@@ -36,7 +35,10 @@ class ProductAPI:
         db: Session = Depends(get_db),
     ):
         service = ProductService(db)
-        return service.get_product(product_id)
+        try:
+            return service.get_product(product_id)
+        except NotFoundError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
     @staticmethod
     @router.put("/{product_id}", response_model=ProductRead)
