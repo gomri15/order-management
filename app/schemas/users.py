@@ -1,3 +1,4 @@
+from uuid import UUID
 from pydantic import BaseModel, EmailStr
 
 # Schema for User Registration & Response
@@ -13,7 +14,7 @@ class UserCreate(UserBase):
 
 
 class UserResponse(UserBase):
-    id: int
+    id: UUID
 
     class Config:
         from_attributes = True  # Allows converting SQLAlchemy models to Pydantic
@@ -22,3 +23,7 @@ class UserResponse(UserBase):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+class UserUpdate(BaseModel):
+    name: str

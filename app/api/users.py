@@ -1,12 +1,14 @@
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.models import User
-from app.schemas.users import UserCreate, UserResponse, UserLogin
+from app.schemas.users import UserCreate, UserResponse, UserLogin, UserUpdate
 from app.services.users import UserService
 from app.core.security import get_security_service, SecurityService
 
 router = APIRouter()
+
 
 class UserAPI:
     @staticmethod
@@ -34,3 +36,26 @@ class UserAPI:
         if not token:
             raise HTTPException(status_code=400, detail="Invalid credentials")
         return {"access_token": token, "token_type": "bearer"}
+
+    @staticmethod
+    @router.put("/{user_id}")
+    def update_user(
+        user_id: str,
+        update_data: UserUpdate,
+        db: Session = Depends(get_db),
+        security_service: SecurityService = Depends(get_security_service),
+
+    ):
+        user_service = UserService(db, security_service)
+        user_service.update_user(user_id, update_data)
+
+    @staticmethod
+    @router.get("/{user_id}", response_model=UserResponse)
+    def get_user(
+        user_id: uuid.UUID,
+        db: Session = Depends(get_db),
+        security_service: SecurityService = Depends(get_security_service)
+    ):
+        user_service = UserService(db, security_service)
+        user = user_service.get_user(user_id)
+        return UserResponse(email=user.email, name=user.name, id=user.id)
