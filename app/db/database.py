@@ -3,7 +3,6 @@ import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base
 from sqlalchemy.exc import OperationalError
-import time
 
 # Read database URL from environment variable
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://order_user:securepassword@localhost/order_db")
@@ -24,6 +23,7 @@ SessionLocal = scoped_session(sessionmaker(autocommit=False, autoflush=False, bi
 # Base class for ORM models
 Base = declarative_base()
 
+
 def get_db():
     """
     Dependency that provides a database session.
@@ -37,20 +37,3 @@ def get_db():
         raise
     finally:
         db.close()
-
-def wait_for_db(timeout=30):
-    """
-    Waits for the database to become available before proceeding.
-    Used for containerized environments where the DB might not be ready immediately.
-    """
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        try:
-            with engine.connect() as conn:
-                logger.info("Database is available!")
-                return
-        except OperationalError:
-            logger.info("Waiting for database...")
-            time.sleep(2)
-    logger.error("Database connection failed after timeout.")
-    raise RuntimeError("Database is not available.")
