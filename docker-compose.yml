@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:15
+    container_name: order_db
+    environment:
+      POSTGRES_DB: order_db
+      POSTGRES_USER: order_user
+      POSTGRES_PASSWORD: securepassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: order_app
+    environment:
+      DATABASE_URL: postgresql://order_user:securepassword@db/order_db
+    volumes:
+      - .:/app  # this mounts your source code
+    working_dir: /app
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+volumes:
+  postgres_data:
