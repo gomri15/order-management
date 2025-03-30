@@ -1,0 +1,95 @@
+from sqlalchemy.orm import Session
+from uuid import UUID
+
+from app.core.errors import NotFoundError
+from app.db.models import Order, OrderItem, OrderStatus, Product
+from app.enums.order_status import OrderStatusEnum
+from app.schemas.orders import GetOrdersQueryParams, OrderCreate
+
+
+class OrderService:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def create_order(self, user_id: UUID, data: OrderCreate) -> Order:
+        status = self.db.query(OrderStatus).filter_by(name=OrderStatusEnum.PENDING).first()
+        if not status:
+            raise NotFoundError("Default order status 'pending' not found")
+
+        order = Order(
+            user_id=user_id,
+            status_id=status.id,
+            shipping_address=data.shipping_address,
+            shipping_city=data.shipping_city,
+            shipping_postal_code=data.shipping_postal_code,
+            shipping_country=data.shipping_country,
+        )
+        self.db.add(order)
+        self.db.flush()  # so order.id is available
+
+        for item in data.items:
+            product = self.db.query(Product).filter_by(id=item.product_id).first()
+
+            if not product:
+                raise NotFoundError(f"Product {item.product_id} not found")
+
+            order_item = OrderItem(
+                order_id=order.id,
+                product_id=product.id,
+                quantity=item.quantity,
+                unit_price=product.price,
+            )
+            self.db.add(order_item)
+
+        self.db.commit()
+        self.db.refresh(order)
+        return order
+
+    def get_order(self, order_id: str, user_id: UUID) -> Order:
+        order = self.db.query(Order).filter_by(id=order_id, user_id=user_id).first()
+
+        if not order:
+            raise NotFoundError("Order not found")
+
+        return order
+
+    def get_orders_by_user(self, user_id: UUID, filters: GetOrdersQueryParams) -> list[Order]:
+        try:
+            query = self.db.query(Order).filter(user_id == user_id)
+            if filters.status_id:
+                query = query.filter(Order.status_id == filters.status_id)
+
+            if filters.created_at:
+                query = query.filter(Order.created_at >= filters.created_at)
+
+            orders = query.all()
+            return orders
+
+        except Exception as e:
+            raise ValueError(f"Error fetching orders: {str(e)}")
+
+    def update_order(self, order: Order, data: OrderCreate) -> Order:
+        order.shipping_address = data.shipping_address
+        order.shipping_city = data.shipping_city
+        order.shipping_postal_code = data.shipping_postal_code
+        order.shipping_country = data.shipping_country
+        order.status_id = data.status_id
+
+        for item in data.items:
+            existing_item = self.db.query(OrderItem).filter_by(order_id=order.id, product_id=item.product_id).first()
+
+            if existing_item:
+                existing_item.quantity = item.quantity
+
+            else:
+                new_item = OrderItem(
+                    order_id=order.id,
+                    product_id=item.product_id,
+                    quantity=item.quantity,
+                    unit_price=existing_item.unit_price,
+                )
+                self.db.add(new_item)
+
+        self.db.commit()
+        self.db.refresh(order)
+        return order

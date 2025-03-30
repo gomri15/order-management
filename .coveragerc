@@ -1,5 +1,7 @@
 [run]
 omit =
     app/interfaces/*
-    app/db/database.py
+    app/db/*
+    app/schemas/*
     app/api/*
+

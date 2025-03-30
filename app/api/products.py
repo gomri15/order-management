@@ -24,7 +24,7 @@ class ProductAPI:
     @router.get("/", response_model=list[ProductRead])
     def list_products(
         db: Session = Depends(get_db),
-    ):
+    ) -> list[ProductRead]:
         service = ProductService(db)
         return service.list_products()
 
@@ -33,7 +33,7 @@ class ProductAPI:
     def get_product(
         product_id: uuid.UUID,
         db: Session = Depends(get_db),
-    ):
+    ) -> ProductRead:
         service = ProductService(db)
         try:
             return service.get_product(product_id)
@@ -46,7 +46,7 @@ class ProductAPI:
         product_id: uuid.UUID,
         product_data: ProductUpdate,
         db: Session = Depends(get_db),
-    ):
+    ) -> ProductRead:
         service = ProductService(db)
         return service.update_product(product_id, product_data)
 
