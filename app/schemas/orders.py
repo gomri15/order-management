@@ -45,6 +45,7 @@ class OrderRead(OrderBase):
 class GetOrdersQueryParams(BaseModel):
     created_at: Optional[datetime] = Field(default=None, alias="createdAt")
     status_id: Optional[int] = Field(default=None, alias="statusId")
+    limit: Optional[int] = Field(default=10)
 
     class Config:
         populate_by_name = True

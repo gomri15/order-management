@@ -282,3 +282,98 @@ def test_filter_users_orders_by_created_at_bigger_than(test_user, db):
         order_payload2,
         items2,
     )
+
+
+def test_get_limit(test_user, db):
+    products1 = create_random_products(db, count=3)
+    items = [OrderItemRead(product_id=p.id, quantity=2) for p in products1]
+    order_payload = OrderCreate(
+        items=items,
+        shipping_address="123 Python Way",
+        shipping_city="Testville",
+        shipping_postal_code="45678",
+        shipping_country="Testland"
+    )
+
+    products2 = create_random_products(db, count=3)
+    items2 = [OrderItemRead(product_id=p.id, quantity=2) for p in products2]
+    order_payload2 = OrderCreate(
+        items=items2,
+        shipping_address="123 Python Way",
+        shipping_city="Testville",
+        shipping_postal_code="45678",
+        shipping_country="Testland"
+    )
+
+    client.post(
+        f"/orders",
+        headers=auth_header(str(test_user.id)),
+        json=order_payload.model_dump(mode="json")
+    )
+
+    client.post(
+        f"/orders",
+        headers=auth_header(str(test_user.id)),
+        json=order_payload2.model_dump(mode="json")
+    )
+
+    # Now get the user's orders
+    get_response = client.get(
+        f"/orders?limit=1",
+        headers=auth_header(str(test_user.id))
+    )
+
+    assert get_response.status_code == 200
+    assert len(get_response.json()) == 1
+
+
+def test_order_multiple_filters(test_user, db):
+    products1 = create_random_products(db, count=3)
+    items = [OrderItemRead(product_id=p.id, quantity=2) for p in products1]
+    order_payload = OrderCreate(
+        items=items,
+        shipping_address="123 Python Way",
+        shipping_city="Testville",
+        shipping_postal_code="45678",
+        shipping_country="Testland"
+    )
+
+    products2 = create_random_products(db, count=3)
+    items2 = [OrderItemRead(product_id=p.id, quantity=2) for p in products2]
+    order_payload2 = OrderCreate(
+        items=items2,
+        shipping_address="123 Python Way",
+        shipping_city="Testville",
+        shipping_postal_code="45678",
+        shipping_country="Testland"
+    )
+
+    current_time = datetime.now(timezone.utc)
+    timestamp = quote(current_time.isoformat())
+
+    client.post(
+        f"/orders",
+        headers=auth_header(str(test_user.id)),
+        json=order_payload.model_dump(mode="json")
+    )
+
+    client.post(
+        f"/orders",
+        headers=auth_header(str(test_user.id)),
+        json=order_payload2.model_dump(mode="json")
+    )
+
+    # Now get the user's orders
+    get_response = client.get(
+        f"/orders?statusId=1&createdAt={timestamp}&limit=1",
+        headers=auth_header(str(test_user.id))
+    )
+
+    assert get_response.status_code == 200
+    assert len(get_response.json()) == 1
+    assert_order_response(
+        get_response.json()[0],
+        order_payload2,
+        items2,
+        expected_status_id=1
+    )

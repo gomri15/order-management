@@ -62,6 +62,11 @@ class OrderService:
             if filters.created_at:
                 query = query.filter(Order.created_at >= filters.created_at)
 
+            query = query.order_by(Order.created_at.desc())
+
+            if filters.limit:
+                query = query.limit(filters.limit)
+
             orders = query.all()
             return orders
 
