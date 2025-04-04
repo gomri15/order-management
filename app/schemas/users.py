@@ -1,7 +1,6 @@
+from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, EmailStr
-
-# Schema for User Registration & Response
 
 
 class UserBase(BaseModel):
@@ -26,4 +25,5 @@ class UserLogin(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    name: str
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None

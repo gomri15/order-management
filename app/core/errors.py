@@ -21,3 +21,7 @@ class UnauthorizedError(DomainError):
 class TokenDecodeError(Exception):
     """Raised when there is an error decoding a JWT token."""
     pass
+
+class NoChangeError(Exception):
+    """Raised when there are no changes to update."""
+    pass

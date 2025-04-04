@@ -1,8 +1,8 @@
 import uuid
+from app.core.errors import NoChangeError
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.database import get_db
-from app.db.models import User
 from app.schemas.users import UserCreate, UserResponse, UserLogin, UserUpdate
 from app.services.users import UserService
 from app.core.security import get_security_service, SecurityService
@@ -12,14 +12,16 @@ router = APIRouter()
 
 class UserAPI:
     @staticmethod
-    @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+    @router.post("/register",
+                 response_model=UserResponse,
+                 status_code=status.HTTP_201_CREATED)
     def register_user(
         user: UserCreate,
         db: Session = Depends(get_db),
         security_service: SecurityService = Depends(get_security_service)
     ):
         user_service = UserService(db, security_service)
-        existing_user = db.query(User).filter(User.email == user.email).first()
+        existing_user = user_service.is_user_exists(user.email)
         if existing_user:
             raise HTTPException(status_code=400, detail="Email already registered")
         return user_service.create_user(user)
@@ -43,11 +45,14 @@ class UserAPI:
         user_id: str,
         update_data: UserUpdate,
         db: Session = Depends(get_db),
-        security_service: SecurityService = Depends(get_security_service),
-
+        security_service: SecurityService = Depends(get_security_service)
     ):
         user_service = UserService(db, security_service)
-        user_service.update_user(user_id, update_data)
+        try:
+            user_service.update_user(user_id, update_data)
+
+        except NoChangeError:
+            raise HTTPException(status_code=200, detail="No changes to update")
 
     @staticmethod
     @router.get("/{user_id}", response_model=UserResponse)
@@ -57,5 +62,4 @@ class UserAPI:
         security_service: SecurityService = Depends(get_security_service)
     ):
         user_service = UserService(db, security_service)
-        user = user_service.get_user(user_id)
-        return UserResponse(email=user.email, name=user.name, id=user.id)
+        return user_service.get_user(user_id)
