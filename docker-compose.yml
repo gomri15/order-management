@@ -1,5 +1,199 @@
+# Use as is if using self-managed Temporal cluster deployed alongside Retool
+# Compare other deployment options here: https://docs.retool.com/self-hosted/concepts/temporal#compare-options
 services:
-  db:
+  api:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    env_file: ./docker.env
+    environment:
+      - DEPLOYMENT_TEMPLATE_TYPE=docker-compose
+      - SERVICE_TYPE=MAIN_BACKEND,DB_CONNECTOR,DB_SSH_CONNECTOR
+      - DBCONNECTOR_POSTGRES_POOL_MAX_SIZE=100
+      - DBCONNECTOR_QUERY_TIMEOUT_MS=120000
+      - WORKFLOW_BACKEND_HOST=http://workflows-backend:3000
+      - WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_HOST=temporal
+      - WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_PORT=7233
+      - CODE_EXECUTOR_INGRESS_DOMAIN=http://code-executor:3004
+    networks:
+      - frontend-network
+      - backend-network
+      - temporal-network
+      - code-executor-network
+    depends_on:
+      - postgres
+      - retooldb-postgres
+      - jobs-runner
+      - workflows-worker
+      - code-executor
+    command: bash -c "./docker_scripts/wait-for-it.sh postgres:5432; ./docker_scripts/start_api.sh"
+    links:
+      - postgres
+    ports:
+      - "3000:3000"
+    restart: on-failure
+
+  jobs-runner:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    env_file: ./docker.env
+    environment:
+      - DEPLOYMENT_TEMPLATE_TYPE=docker-compose
+      - SERVICE_TYPE=JOBS_RUNNER
+    networks:
+      - backend-network
+    depends_on:
+      - postgres
+    command: bash -c "chmod -R +x ./docker_scripts; sync; ./docker_scripts/wait-for-it.sh postgres:5432; ./docker_scripts/start_api.sh"
+    links:
+      - postgres
+
+  workflows-worker:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    command: bash -c "./docker_scripts/wait-for-it.sh postgres:5432; ./docker_scripts/start_api.sh"
+    env_file: ./docker.env
+    depends_on:
+      - temporal
+    environment:
+      - DEPLOYMENT_TEMPLATE_TYPE=docker-compose
+      - SERVICE_TYPE=WORKFLOW_TEMPORAL_WORKER
+      - DISABLE_DATABASE_MIGRATIONS=true
+      - WORKFLOW_BACKEND_HOST=http://workflows-backend:3000
+      - WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_HOST=temporal
+      - WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_PORT=7233
+      - CODE_EXECUTOR_INGRESS_DOMAIN=http://code-executor:3004
+    networks:
+      - backend-network
+      - temporal-network
+      - code-executor-network
+    restart: on-failure
+
+  workflows-backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    env_file: ./docker.env
+    environment:
+      - DEPLOYMENT_TEMPLATE_TYPE=docker-compose
+      - SERVICE_TYPE=WORKFLOW_BACKEND,DB_CONNECTOR,DB_SSH_CONNECTOR
+      - WORKFLOW_BACKEND_HOST=http://workflows-backend:3000
+      - WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_HOST=temporal
+      - WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_PORT=7233
+      - CODE_EXECUTOR_INGRESS_DOMAIN=http://code-executor:3004
+    networks:
+      - backend-network
+      - temporal-network
+      - code-executor-network
+    depends_on:
+      - postgres
+      - retooldb-postgres
+      - code-executor
+    command: bash -c "./docker_scripts/wait-for-it.sh postgres:5432; ./docker_scripts/start_api.sh"
+    links:
+      - postgres
+    restart: on-failure
+
+  code-executor:
+    build:
+      context: ./
+      dockerfile: CodeExecutor.Dockerfile
+    command: bash -c "./start.sh"
+    env_file: ./docker.env
+    environment:
+      - DEPLOYMENT_TEMPLATE_TYPE=docker-compose
+      - NODE_OPTIONS=--max_old_space_size=1024
+    networks:
+      - code-executor-network
+    # code-executor uses nsjail to sandbox code execution. nsjail requires
+    # privileged container access.
+    # If your deployment does not support privileged access, you can set this
+    # to false to not use nsjail. Without nsjail, all code is run without
+    # sandboxing within your deployment.
+    privileged: true
+    restart: on-failure
+
+  # Retool's storage database. See these docs to migrate to an externally hosted database: https://docs.retool.com/docs/configuring-retools-storage-database
+  postgres:
+    image: "postgres:15.12"
+    env_file: docker.env
+    networks:
+      - backend-network
+      - intra-temporal-network
+    volumes:
+      - data:/var/lib/postgresql/data
+
+  retooldb-postgres:
+    image: "postgres:15.12"
+    env_file: retooldb.env
+    networks:
+      - backend-network
+    volumes:
+      - retooldb-data:/var/lib/postgresql/data
+
+  # Not required, but leave this container to use nginx for handling the frontend & SSL certification
+  https-portal:
+    image: tryretool/https-portal:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    links:
+      - api
+    restart: always
+    env_file: ./docker.env
+    environment:
+      STAGE: "local" # <- Change 'local' to 'production' to use a LetsEncrypt signed SSL cert
+      CLIENT_MAX_BODY_SIZE: 40M
+      KEEPALIVE_TIMEOUT: 605
+      PROXY_CONNECT_TIMEOUT: 600
+      PROXY_SEND_TIMEOUT: 600
+      PROXY_READ_TIMEOUT: 600
+    networks:
+      - frontend-network
+
+  temporal:
+    container_name: temporal
+    env_file: ./docker.env
+    environment:
+      # To enable TLS between temporal and external postgres, set both below variables to true
+      - SQL_TLS_ENABLED=false
+      - SQL_TLS=false
+      # Defined twice because temporal-server and temporal-sql-tool use different envvars
+      - SQL_TLS_DISABLE_HOST_VERIFICATION=true
+      - SQL_HOST_VERIFICATION=false
+    image: tryretool/one-offs:retool-temporal-1.1.6
+    networks:
+      - intra-temporal-network
+      - temporal-network
+    ports:
+      - "127.0.0.1:7233:7233"
+  temporal-admin-tools:
+    container_name: temporal-admin-tools
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+    image: temporalio/admin-tools:1.18.5
+    networks:
+      - intra-temporal-network
+    stdin_open: true
+    tty: true
+  temporal-ui:
+    container_name: temporal-ui
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    image: temporalio/ui:2.9.1
+    networks:
+      - intra-temporal-network
+    ports:
+      - "8080:8080"
+
+  order-app-db:
     image: postgres:15
     container_name: order_db
     environment:
@@ -7,25 +201,50 @@ services:
       POSTGRES_USER: order_user
       POSTGRES_PASSWORD: securepassword
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - order-app-data:/var/lib/postgresql/data
+    # ports:
+    #   - "5432:5432"
+    networks:
+      - private-order-app-network
 
   app:
     build:
       context: .
-      dockerfile: docker/Dockerfile
-    container_name: order_app
+      dockerfile: Dockerfile.order_mgmt
+    container_name: order-app
     environment:
-      DATABASE_URL: postgresql://order_user:securepassword@db/order_db
+      DATABASE_URL: postgresql://order_user:securepassword@order-app-db/order_db
     volumes:
-      - .:/app  # this mounts your source code
+      - .:/app # this mounts your source code
     working_dir: /app
     depends_on:
-      - db
+      - order-app-db
     ports:
       - "8000:8000"
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command:
+      [
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
+    networks:
+      - frontend-network
+      - backend-network
+      - private-order-app-network
+
+networks:
+  frontend-network:
+  backend-network:
+  code-executor-network:
+  temporal-network:
+  intra-temporal-network:
+  private-order-app-network:
 
 volumes:
-  postgres_data:
+  data:
+  retooldb-data:
+  order-app-data:
