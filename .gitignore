@@ -173,4 +173,4 @@ dev/**
 
 # Retool config
 docker.env
-retool.env
+retooldb.env
