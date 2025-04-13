@@ -1,6 +1,8 @@
 from datetime import datetime
-from pydantic import BaseModel, UUID4, Field, field_serializer
+from pydantic import BaseModel, UUID4, Field, model_validator
 from typing import List, Optional
+
+from app.consts.order_status import ORDER_STATUS_NAME_TO_ID
 
 
 class OrderItemRead(BaseModel):
@@ -44,8 +46,14 @@ class OrderRead(OrderBase):
 
 class GetOrdersQueryParams(BaseModel):
     created_at: Optional[datetime] = Field(default=None, alias="createdAt")
-    status_id: Optional[int] = Field(default=None, alias="statusId")
+    status_id: int | None = None
     limit: Optional[int] = Field(default=10)
+
+    @model_validator(mode="after")
+    def validate_status_id(cls, values):
+        if values.status_id is not None and values.status_id not in ORDER_STATUS_NAME_TO_ID.values():
+            raise ValueError(f"Invalid status_id: {values.status_id}")
+        return values
 
     class Config:
         populate_by_name = True
