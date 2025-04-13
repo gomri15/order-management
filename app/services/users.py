@@ -28,17 +28,20 @@ class UserService:
     def update_user(self, user_id: str, updated_data: UserUpdate):
         user_to_update = self.db.query(User).filter(User.id == user_id).first()
         if user_to_update.email == updated_data.email \
-            and user_to_update.name == updated_data.name:
-            raise NoChangeError("No changes detected in user data.")      
-        
+                and user_to_update.name == updated_data.name:
+            raise NoChangeError("No changes detected in user data.")
+
         # TODO: can be a separate method to check the new data is the same or not
         user_to_update.name = updated_data.name
         user_to_update.email = updated_data.email
         self.db.commit()
         self.db.refresh(user_to_update)
 
-    def get_user(self, user_id: UUID) -> UserResponse:
+    def get_user(self, user_id: UUID) -> User:
         return self.db.query(User).filter(User.id == user_id).first()
 
     def is_user_exists(self, email: str) -> bool:
         return self.db.query(User).filter(User.email == email).first() is not None
+
+    def get_users(self, skip: int = 0, limit: int = 100) -> list[User]:
+        return self.db.query(User).offset(skip).limit(limit).all()
