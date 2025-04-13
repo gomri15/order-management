@@ -55,7 +55,7 @@ class OrderService:
 
     def get_orders_by_user(self, user_id: UUID, filters: GetOrdersQueryParams) -> list[Order]:
         try:
-            query = self.db.query(Order).filter(user_id == user_id)
+            query = self.db.query(Order).filter(Order.user_id == user_id)
             if filters.status_id:
                 query = query.filter(Order.status_id == filters.status_id)
 
