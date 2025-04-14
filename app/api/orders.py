@@ -23,6 +23,19 @@ class OrderAPI:
         return service.create_order(user.id, data)
 
     @staticmethod
+    @router.get("/{order_id}/items", response_model=list[OrderItemRead])
+    def get_order_items(
+        order_id: str,
+        db: Session = Depends(get_db),
+        user=Depends(get_current_user)
+    ) -> OrderRead:
+        service = OrderService(db)
+        order = service.get_order_items(order_id)
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        return order
+
+    @staticmethod
     @router.get("/{order_id}", response_model=OrderRead)
     def get_order(
         order_id: UUID4,

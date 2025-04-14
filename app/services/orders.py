@@ -53,6 +53,14 @@ class OrderService:
 
         return order
 
+    def get_order_items(self, order_id: UUID) -> list[OrderItem]:
+        order_items = self.db.query(OrderItem).filter_by(order_id=order_id).all()
+
+        if not order_items:
+            raise NotFoundError(f"Order items not found, {order_id}")
+
+        return order_items
+
     def get_orders_by_user(self, user_id: UUID, filters: GetOrdersQueryParams) -> list[Order]:
         try:
             query = self.db.query(Order).filter(Order.user_id == user_id)

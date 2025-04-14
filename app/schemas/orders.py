@@ -5,13 +5,22 @@ from typing import List, Optional
 from app.consts.order_status import ORDER_STATUS_NAME_TO_ID
 
 
+class OrderItemCreate(BaseModel):
+    product_id: UUID4
+    quantity: int
+    unit_price: float
+
+    model_config = {"from_attributes": True}
+
+
 class OrderItemRead(BaseModel):
     product_id: UUID4
     quantity: int
+    unit_price: float
 
 
 class OrderBase(BaseModel):
-    items: List[OrderItemRead]
+    items: List[OrderItemCreate]
     shipping_address: str
     shipping_city: str
     shipping_postal_code: str
@@ -24,14 +33,6 @@ class OrderCreate(OrderBase):
 
 class OrderUpdate(OrderBase):
     status_id: int
-
-
-class OrderItemCreate(BaseModel):
-    product_id: UUID4
-    quantity: int
-    unit_price: float
-
-    model_config = {"from_attributes": True}
 
 
 class OrderRead(OrderBase):
