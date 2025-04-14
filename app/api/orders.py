@@ -3,7 +3,7 @@ from pydantic import UUID4
 from app.auth.dependencies import get_current_user
 from app.core.errors import NotFoundError
 from app.db.database import get_db
-from app.schemas.orders import GetOrdersQueryParams, OrderCreate, OrderRead, OrderUpdate
+from app.schemas.orders import GetOrdersQueryParams, OrderCreate, OrderItemRead, OrderRead, OrderUpdate
 from app.services.orders import OrderService
 from sqlalchemy.orm import Session
 
@@ -21,6 +21,20 @@ class OrderAPI:
     ) -> OrderRead:
         service = OrderService(db)
         return service.create_order(user.id, data)
+
+    @staticmethod
+    @router.get("/admin", response_model=list[OrderRead])
+    def get_all_orders(
+        db: Session = Depends(get_db),
+        user=Depends(get_current_user),
+        filters: GetOrdersQueryParams = Depends()
+    ) -> list[OrderRead]:
+        order_service = OrderService(db)
+        try:
+            return order_service.get_all_orders(filters=filters)
+
+        except NotFoundError:
+            raise HTTPException(status_code=404, detail="No orders found for this user")
 
     @staticmethod
     @router.get("/{order_id}/items", response_model=list[OrderItemRead])
@@ -43,7 +57,7 @@ class OrderAPI:
         user=Depends(get_current_user)
     ) -> OrderRead:
         service = OrderService(db)
-        order = service.get_order(order_id, user.id)
+        order = service.get_order(order_id)
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
         return order

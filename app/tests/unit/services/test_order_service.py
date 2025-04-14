@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timezone
 import logging
 import uuid
 
@@ -178,3 +179,84 @@ def test_get_order_items_raises_for_nonexistent_order(seeded_test_db):
     service = OrderService(db)
     with pytest.raises(NotFoundError):
         service.get_order_items(uuid.uuid4())
+
+
+def test_get_all_orders_with_multiple_filters(seeded_test_db):
+    db, data = seeded_test_db
+    service = OrderService(db)
+
+    now = datetime.now(tz=UTC)
+    order_id = service.create_order(user_id=data["test_user_id"], data=OrderCreate(
+        shipping_address="123 Test St",
+        shipping_city="Test City",
+        shipping_postal_code="12345",
+        shipping_country="Testland",
+        items=[OrderItemCreate(product_id=data["products"][0].id,
+                               quantity=2,
+                               unit_price=data["products"][0].price)],
+    )).id
+    filters = GetOrdersQueryParams(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PENDING],
+                                   created_at=now)
+
+    results = service.get_all_orders(filters)
+
+    assert len(results) == 1
+    assert results[0].status_id == ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PENDING]
+    assert str(results[0].id) == str(order_id)
+
+
+def test_get_all_orders_with_status_id(seeded_test_db):
+    db, data = seeded_test_db
+    service = OrderService(db)
+
+    order_id = service.create_order(user_id=data["test_user_id"], data=OrderCreate(
+        shipping_address="123 Test St",
+        shipping_city="Test City",
+        shipping_postal_code="12345",
+        shipping_country="Testland",
+        items=[OrderItemCreate(product_id=data["products"][0].id,
+                               quantity=2,
+                               unit_price=data["products"][0].price)],
+    )).id
+
+    order = service.get_order(order_id=order_id, user_id=data["test_user_id"])
+    order_update = OrderUpdate(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PROCESSED],
+                               shipping_address="456 Test St",
+                               shipping_city="Test City",
+                               shipping_postal_code="54321",
+                               shipping_country="Testland",
+                               items=[OrderItemCreate(product_id=data["products"][0].id,
+                                                      quantity=2,
+                                                      unit_price=data["products"][0].price)]
+                               )
+    service.update_order(order=order, data=order_update)
+    filters = GetOrdersQueryParams(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PROCESSED])
+
+    results = service.get_all_orders(filters)
+
+    assert len(results) == 1
+    assert results[0].status_id == ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PROCESSED]
+    assert str(results[0].id) == str(order_id)
+
+
+def test_get_all_orders_with_limit_order_desc(seeded_test_db):
+    db, data = seeded_test_db
+    service = OrderService(db)
+    now = datetime.now(tz=UTC)
+    service.create_order(user_id=data["test_user_id"], data=OrderCreate(
+        shipping_address="123 Test St",
+        shipping_city="Test City",
+        shipping_postal_code="12345",
+        shipping_country="Testland",
+        items=[OrderItemCreate(product_id=data["products"][0].id,
+                               quantity=2,
+                               unit_price=data["products"][0].price)],
+    )).id
+
+    filters = GetOrdersQueryParams(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PENDING],
+                                   limit=1)
+    results = service.get_all_orders(filters)
+
+    assert len(results) == 1
+    assert now > results[0].created_at.astimezone(timezone.utc)
+    assert results[0].status_id == ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PENDING]

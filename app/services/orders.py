@@ -4,13 +4,14 @@ from uuid import UUID
 from app.core.errors import NotFoundError
 from app.db.models import Order, OrderItem, OrderStatus, Product
 from app.enums.order_status import OrderStatusEnum
-from app.schemas.orders import GetOrdersQueryParams, OrderCreate
+from app.schemas.orders import GetOrdersQueryParams, OrderCreate, OrderUpdate
 
 
 class OrderService:
     def __init__(self, db: Session):
         self.db = db
 
+    # TODO: make sure there is item in order before creating order
     def create_order(self, user_id: UUID, data: OrderCreate) -> Order:
         status = self.db.query(OrderStatus).filter_by(name=OrderStatusEnum.PENDING).first()
         if not status:
@@ -81,7 +82,7 @@ class OrderService:
         except Exception as e:
             raise ValueError(f"Error fetching orders: {str(e)}")
 
-    def update_order(self, order: Order, data: OrderCreate) -> Order:
+    def update_order(self, order: Order, data: OrderUpdate) -> Order:
         order.shipping_address = data.shipping_address
         order.shipping_city = data.shipping_city
         order.shipping_postal_code = data.shipping_postal_code
@@ -106,3 +107,23 @@ class OrderService:
         self.db.commit()
         self.db.refresh(order)
         return order
+
+    def get_all_orders(self, filters: GetOrdersQueryParams = None) -> list[Order]:
+        try:
+            query = self.db.query(Order)
+            if filters.status_id:
+                query = query.filter(Order.status_id == filters.status_id)
+
+            if filters.created_at:
+                query = query.filter(Order.created_at >= filters.created_at)
+
+            query = query.order_by(Order.created_at.desc())
+
+            if filters.limit:
+                query = query.limit(filters.limit)
+
+            orders = query.all()
+            return orders
+
+        except Exception as e:
+            raise ValueError(f"Error fetching orders: {str(e)}")
