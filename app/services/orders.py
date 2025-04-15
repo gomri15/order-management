@@ -1,3 +1,4 @@
+from typing import List
 from sqlalchemy.orm import Session
 from uuid import UUID
 
@@ -62,25 +63,34 @@ class OrderService:
 
         return order_items
 
-    def get_orders_by_user(self, user_id: UUID, filters: GetOrdersQueryParams) -> list[Order]:
+    def get_all_orders(self, filters: GetOrdersQueryParams) -> List[Order]:
+        try:
+            query = self.db.query(Order)
+            query = self._query_orders_by_filter(filters, query)
+            return query.all()
+        except Exception as e:
+            raise ValueError(f"Error fetching all orders: {str(e)}")
+
+    def get_orders_by_user(self, user_id: UUID, filters: GetOrdersQueryParams) -> List[Order]:
         try:
             query = self.db.query(Order).filter(Order.user_id == user_id)
-            if filters.status_id:
-                query = query.filter(Order.status_id == filters.status_id)
-
-            if filters.created_at:
-                query = query.filter(Order.created_at >= filters.created_at)
-
-            query = query.order_by(Order.created_at.desc())
-
-            if filters.limit:
-                query = query.limit(filters.limit)
-
-            orders = query.all()
-            return orders
-
+            query = self._query_orders_by_filter(filters, query)
+            return query.all()
         except Exception as e:
-            raise ValueError(f"Error fetching orders: {str(e)}")
+            raise ValueError(f"Error fetching orders for user {user_id}: {str(e)}")
+
+    def _query_orders_by_filter(self, filters, query):
+        if filters.status_id:
+            query = query.filter(Order.status_id == filters.status_id)
+
+        if filters.created_at:
+            query = query.filter(Order.created_at >= filters.created_at)
+
+        query = query.order_by(Order.created_at.desc())
+
+        if filters.limit:
+            query = query.limit(filters.limit)
+        return query
 
     def update_order(self, order: Order, data: OrderUpdate) -> Order:
         order.shipping_address = data.shipping_address
@@ -107,23 +117,3 @@ class OrderService:
         self.db.commit()
         self.db.refresh(order)
         return order
-
-    def get_all_orders(self, filters: GetOrdersQueryParams = None) -> list[Order]:
-        try:
-            query = self.db.query(Order)
-            if filters.status_id:
-                query = query.filter(Order.status_id == filters.status_id)
-
-            if filters.created_at:
-                query = query.filter(Order.created_at >= filters.created_at)
-
-            query = query.order_by(Order.created_at.desc())
-
-            if filters.limit:
-                query = query.limit(filters.limit)
-
-            orders = query.all()
-            return orders
-
-        except Exception as e:
-            raise ValueError(f"Error fetching orders: {str(e)}")
