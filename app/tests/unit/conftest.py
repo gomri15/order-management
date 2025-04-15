@@ -1,6 +1,4 @@
-from datetime import datetime
 import logging
-import random
 from typing import List
 from unittest.mock import MagicMock
 from uuid import uuid4
@@ -11,9 +9,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.security import SecurityService
 from app.db.database import Base
-from app.db.models import Order, OrderStatus, Product
-from app.enums.order_status import OrderStatusEnum
-from app.consts.order_status import ORDER_STATUS_NAME_TO_ID
+from app.db.models import OrderStatus, Product
 from app.schemas.orders import OrderCreate
 from app.schemas.products import ProductCreate
 from app.services.orders import OrderService
@@ -24,7 +20,7 @@ from faker import Faker
 faker = Faker()
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def seeded_test_db():
     engine = create_engine("sqlite:///:memory:")
     Session = sessionmaker(bind=engine)
@@ -127,37 +123,6 @@ def create_test_products(db, number_of_products: int = 3):
         products.append(product)
 
     return products
-
-
-def seed_orders(db, test_user_id, other_user_id):
-    orders = [
-        Order(id=uuid4(),
-              user_id=test_user_id,
-              status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PROCESSED],
-              created_at=datetime(2024, 1, 1),
-              shipping_address="123 Test St, Test City, TC 12345",
-              shipping_city="Test City",
-              shipping_country="Testland",
-              shipping_postal_code="12345"),
-        Order(id=uuid4(),
-              user_id=test_user_id,
-              status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PENDING],
-              created_at=datetime(2024, 2, 1),
-              shipping_address="123 Test St, Test City, TC 12345",
-              shipping_city="Test City",
-              shipping_country="Testland",
-              shipping_postal_code="12345"),
-        Order(id=uuid4(),
-              user_id=other_user_id,
-              status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.DELIVERED],
-              created_at=datetime(2024, 3, 1),
-              shipping_address="123 Test St, Test City, TC 12345",
-              shipping_city="Test City",
-              shipping_country="Testland",
-              shipping_postal_code="12345"),
-    ]
-    db.add_all(orders)
-    return orders
 
 
 def seed_order_statuses(db):
