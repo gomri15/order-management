@@ -1,3 +1,4 @@
+from typing import List
 import uuid
 from app.core.errors import NoChangeError
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -63,3 +64,13 @@ class UserAPI:
     ):
         user_service = UserService(db, security_service)
         return user_service.get_user(user_id)
+
+    @staticmethod
+    @router.get("/", response_model=List[UserResponse])
+    # TODO: add filtering
+    def get_users(
+        db: Session = Depends(get_db),
+        security_service: SecurityService = Depends(get_security_service)
+    ):
+        user_service = UserService(db, security_service)
+        return user_service.get_users()
