@@ -177,3 +177,4 @@ retooldb.env
 
 # Order App config
 order-app.env
+.vscode/
