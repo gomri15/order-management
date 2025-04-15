@@ -1,9 +1,7 @@
 from fastapi import HTTPException
-import jwt
 import pytest
 
 from app.auth.dependencies import get_current_user
-from app.core.errors import TokenDecodeError
 
 
 def test_no_user_id_in_token(security_service, mocker):

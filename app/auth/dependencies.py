@@ -1,7 +1,6 @@
 
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-import jwt
 from sqlalchemy.orm import Session
 
 from app.core.errors import TokenDecodeError
