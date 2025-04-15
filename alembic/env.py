@@ -7,12 +7,21 @@ from sqlalchemy import pool
 from alembic import context
 
 from app.db.database import Base
-from app.db import models
+
+import os
+
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+POSTGRES_DB = os.getenv("POSTGRES_DB")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST",)
+POSTGRES_PORT = os.getenv("POSTGRES_PORT",)
+
+DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-database_url = os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
+database_url = DATABASE_URL
 
 if not database_url:
     raise ValueError("❌ DATABASE_URL is not set! Set it in your environment variables or alembic.ini.")

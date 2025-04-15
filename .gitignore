@@ -174,3 +174,6 @@ dev/**
 # Retool config
 docker.env
 retooldb.env
+
+# Order App config
+order-app.env

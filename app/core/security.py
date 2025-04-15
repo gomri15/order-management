@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+import os
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 import jwt
@@ -6,9 +6,9 @@ import jwt
 from app.core.errors import TokenDecodeError
 from app.interfaces.security_interface import ISecurityService
 
-SECRET_KEY = "your_secret_key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
 
 
 class SecurityService(ISecurityService):

@@ -196,14 +196,9 @@ services:
   order-app-db:
     image: postgres:15
     container_name: order_db
-    environment:
-      POSTGRES_DB: order_db
-      POSTGRES_USER: order_user
-      POSTGRES_PASSWORD: securepassword
+    env_file: order-app.env
     volumes:
       - order-app-data:/var/lib/postgresql/data
-    # ports:
-    #   - "5432:5432"
     networks:
       - private-order-app-network
 
@@ -211,9 +206,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.order_mgmt
+    env_file: order-app.env
     container_name: order-app
-    environment:
-      DATABASE_URL: postgresql://order_user:securepassword@order-app-db/order_db
+
     volumes:
       - .:/app # this mounts your source code
     working_dir: /app
