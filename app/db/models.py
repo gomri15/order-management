@@ -33,7 +33,7 @@ class Order(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
-    status_id = Column(Integer, ForeignKey("order_statuses.id"), nullable=False)
+    status_id = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
     shipping_address = Column(Text, nullable=False)
@@ -41,7 +41,6 @@ class Order(Base):
     shipping_postal_code = Column(String, nullable=False)
     shipping_country = Column(String, nullable=False)
 
-    status = relationship("OrderStatus")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     user = relationship("User", back_populates="orders")
 
@@ -58,11 +57,3 @@ class OrderItem(Base):
 
     order = relationship("Order", back_populates="items")
     product = relationship("Product")
-
-
-class OrderStatus(Base):
-    __tablename__ = "order_statuses"
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False, unique=True)
-    description = Column(String, nullable=True)

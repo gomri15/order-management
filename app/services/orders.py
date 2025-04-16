@@ -1,9 +1,9 @@
 from typing import List
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, Query
 from uuid import UUID
 
 from app.core.errors import NotFoundError
-from app.db.models import Order, OrderItem, OrderStatus, Product
+from app.db.models import Order, OrderItem, Product
 from app.enums.order_status import OrderStatusEnum
 from app.schemas.orders import GetOrdersQueryParams, OrderCreate, OrderUpdate
 
@@ -14,13 +14,9 @@ class OrderService:
 
     # TODO: make sure there is item in order before creating order
     def create_order(self, user_id: UUID, data: OrderCreate) -> Order:
-        status = self.db.query(OrderStatus).filter_by(name=OrderStatusEnum.PENDING).first()
-        if not status:
-            raise NotFoundError("Default order status 'pending' not found")
-
         order = Order(
             user_id=user_id,
-            status_id=status.id,
+            status_id=OrderStatusEnum.PENDING.value,
             shipping_address=data.shipping_address,
             shipping_city=data.shipping_city,
             shipping_postal_code=data.shipping_postal_code,
@@ -64,22 +60,16 @@ class OrderService:
         return order_items
 
     def get_all_orders(self, filters: GetOrdersQueryParams) -> List[Order]:
-        try:
-            query = self.db.query(Order)
-            query = self._query_orders_by_filter(filters, query)
-            return query.all()
-        except Exception as e:
-            raise ValueError(f"Error fetching all orders: {str(e)}")
+        query = self.db.query(Order)
+        query = self._query_orders_by_filter(filters, query)
+        return query.all()
 
     def get_orders_by_user(self, user_id: UUID, filters: GetOrdersQueryParams) -> List[Order]:
-        try:
-            query = self.db.query(Order).filter(Order.user_id == user_id)
-            query = self._query_orders_by_filter(filters, query)
-            return query.all()
-        except Exception as e:
-            raise ValueError(f"Error fetching orders for user {user_id}: {str(e)}")
+        query = self.db.query(Order).filter(Order.user_id == user_id)
+        query = self._query_orders_by_filter(filters, query)
+        return query.all()
 
-    def _query_orders_by_filter(self, filters, query):
+    def _query_orders_by_filter(self, filters: GetOrdersQueryParams, query: Query) -> Query:
         if filters.status_id:
             query = query.filter(Order.status_id == filters.status_id)
 

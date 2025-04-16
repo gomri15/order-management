@@ -1,9 +1,9 @@
-from enum import Enum
+from enum import Enum, auto
 
 
-class OrderStatusEnum(str, Enum):
-    PENDING = "pending"
-    PROCESSED = "processed"
-    SHIPPED = "shipped"
-    DELIVERED = "delivered"
-    CANCELED = "canceled"
+class OrderStatusEnum(Enum):
+    PENDING = auto()
+    PROCESSED = auto()
+    SHIPPED = auto()
+    DELIVERED = auto()
+    CANCELED = auto()

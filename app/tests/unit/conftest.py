@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.security import SecurityService
 from app.db.database import Base
-from app.db.models import OrderStatus, Product
+from app.db.models import Product
 from app.schemas.orders import OrderCreate
 from app.schemas.products import ProductCreate
 from app.services.orders import OrderService
@@ -30,7 +30,6 @@ def seeded_test_db():
     # Explicit test values
     test_user_id = uuid4()
     other_user_id = uuid4()
-    seed_order_statuses(db)
 
     products = create_test_products(db)
     orders = create_test_orders(test_user_id, other_user_id, products, db)
@@ -123,16 +122,6 @@ def create_test_products(db, number_of_products: int = 3):
         products.append(product)
 
     return products
-
-
-def seed_order_statuses(db):
-    db.add_all([
-        OrderStatus(id=1, name="pending", description="Waiting for processing"),
-        OrderStatus(id=2, name="processed", description="Being packed"),
-        OrderStatus(id=3, name="shipped", description="Shipped to customer"),
-        OrderStatus(id=4, name="delivered", description="Delivered"),
-        OrderStatus(id=5, name="canceled", description="Canceled by user"),
-    ])
 
 
 @pytest.fixture

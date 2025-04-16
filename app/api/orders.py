@@ -57,7 +57,7 @@ class OrderAPI:
         user=Depends(get_current_user)
     ) -> OrderRead:
         service = OrderService(db)
-        order = service.get_order(order_id)
+        order = service.get_order(order_id, user_id=user.id)
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
         return order

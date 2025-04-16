@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
-from app.consts.order_status import ORDER_STATUS_NAME_TO_ID
 from app.db.database import SessionLocal
 from app.db.models import User, Product, Order, OrderItem
 from app.enums.order_status import OrderStatusEnum
@@ -67,7 +66,7 @@ def seed_database():
         order1 = Order(
             id=uuid.uuid4(),
             user_id=user1.id,
-            status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PROCESSED],
+            status_id=OrderStatusEnum.PROCESSED.value,
             created_at=datetime.now(timezone.utc),
             shipping_address="123 Test St",
             shipping_city="Test City",
@@ -77,7 +76,7 @@ def seed_database():
         order2 = Order(
             id=uuid.uuid4(),
             user_id=user2.id,
-            status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PENDING],
+            status_id=OrderStatusEnum.PENDING.value,
             created_at=datetime.now(timezone.utc),
             shipping_address="456 Another St",
             shipping_city="Another City",

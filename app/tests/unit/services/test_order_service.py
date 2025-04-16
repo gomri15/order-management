@@ -1,9 +1,9 @@
 from datetime import UTC, datetime, timezone
 import logging
+from time import sleep
 import uuid
 
 import pytest
-from app.consts.order_status import ORDER_STATUS_NAME_TO_ID
 from app.core.errors import NotFoundError
 from app.db.models import Order
 from app.enums.order_status import OrderStatusEnum
@@ -41,7 +41,7 @@ def test_user_cant_see_other_user_orders(seeded_test_db):
     db, data = seeded_test_db
     service = OrderService(db=db)
 
-    filters = GetOrdersQueryParams(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.DELIVERED])
+    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.DELIVERED.value)
     results = service.get_orders_by_user(user_id=data["test_user_id"], filters=filters)
 
     assert len(results) == 0
@@ -51,7 +51,7 @@ def test_get_orders_by_user(seeded_test_db):
     db, data = seeded_test_db
     service = OrderService(db=db)
 
-    filters = GetOrdersQueryParams(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PROCESSED])
+    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.PROCESSED.value)
     product_id = data["products"][0].id
     product_price = data["products"][0].price
     order_id = service.create_order(
@@ -68,7 +68,7 @@ def test_get_orders_by_user(seeded_test_db):
             )],
         ),
     ).id
-    order_update = OrderUpdate(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PROCESSED],
+    order_update = OrderUpdate(status_id=OrderStatusEnum.PROCESSED.value,
                                shipping_address="456 Test St",
                                shipping_city="Test City",
                                shipping_postal_code="54321",
@@ -82,7 +82,7 @@ def test_get_orders_by_user(seeded_test_db):
     results = service.get_orders_by_user(user_id=data["test_user_id"], filters=filters)
 
     assert len(results) == 1
-    assert results[0].status_id == ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PROCESSED]
+    assert results[0].status_id == OrderStatusEnum.PROCESSED.value
     assert str(results[0].user_id) == str(data["test_user_id"])
 
 
@@ -90,7 +90,7 @@ def test_get_orders_by_user_limit_zero(seeded_test_db):
     db, data = seeded_test_db
     service = OrderService(db=db)
 
-    filters = GetOrdersQueryParams(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.DELIVERED],
+    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.DELIVERED.value,
                                    limit=0)
     results = service.get_orders_by_user(user_id=data["test_user_id"], filters=filters)
 
@@ -101,7 +101,7 @@ def test_get_orders_by_user_with_unknown_user_id(seeded_test_db):
     db, data = seeded_test_db
     service = OrderService(db=db)
 
-    filters = GetOrdersQueryParams(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.DELIVERED],
+    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.DELIVERED.value,
                                    limit=1)
     results = service.get_orders_by_user(user_id=uuid.uuid4(), filters=filters)
 
@@ -128,7 +128,7 @@ def test_get_orders_limit(seeded_test_db):
     ).id
 
     order = service.get_order(order_id=order_id, user_id=data["test_user_id"])
-    order_update = OrderUpdate(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PROCESSED],
+    order_update = OrderUpdate(status_id=OrderStatusEnum.PROCESSED.value,
                                shipping_address="456 Test St",
                                shipping_city="Test City",
                                shipping_postal_code="54321",
@@ -138,12 +138,12 @@ def test_get_orders_limit(seeded_test_db):
                                                       unit_price=data["products"][0].price)]
                                )
     service.update_order(order=order, data=order_update)
-    filters = GetOrdersQueryParams(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PROCESSED],
+    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.PROCESSED.value,
                                    limit=1)
     results = service.get_orders_by_user(user_id=data["test_user_id"], filters=filters)
 
     assert len(results) == 1
-    assert results[0].status_id == ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PROCESSED]
+    assert results[0].status_id == OrderStatusEnum.PROCESSED.value
     assert str(results[0].user_id) == str(data["test_user_id"])
 
 
@@ -195,13 +195,13 @@ def test_get_all_orders_with_multiple_filters(seeded_test_db):
                                quantity=2,
                                unit_price=data["products"][0].price)],
     )).id
-    filters = GetOrdersQueryParams(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PENDING],
+    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.PENDING.value,
                                    created_at=now)
 
     results = service.get_all_orders(filters)
 
     assert len(results) == 1
-    assert results[0].status_id == ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PENDING]
+    assert results[0].status_id == OrderStatusEnum.PENDING.value
     assert str(results[0].id) == str(order_id)
 
 
@@ -220,7 +220,7 @@ def test_get_all_orders_with_status_id(seeded_test_db):
     )).id
 
     order = service.get_order(order_id=order_id, user_id=data["test_user_id"])
-    order_update = OrderUpdate(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PROCESSED],
+    order_update = OrderUpdate(status_id=OrderStatusEnum.PROCESSED.value,
                                shipping_address="456 Test St",
                                shipping_city="Test City",
                                shipping_postal_code="54321",
@@ -230,21 +230,22 @@ def test_get_all_orders_with_status_id(seeded_test_db):
                                                       unit_price=data["products"][0].price)]
                                )
     service.update_order(order=order, data=order_update)
-    filters = GetOrdersQueryParams(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PROCESSED])
+    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.PROCESSED.value)
 
     results = service.get_all_orders(filters)
 
     assert len(results) == 1
-    assert results[0].status_id == ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PROCESSED]
+    assert results[0].status_id == OrderStatusEnum.PROCESSED.value
     assert str(results[0].id) == str(order_id)
 
 
 def test_get_all_orders_with_limit_order_desc(seeded_test_db):
     db, data = seeded_test_db
     service = OrderService(db)
-    now = datetime.now(tz=UTC)
+    pre_create_time = datetime.now(tz=UTC)
+    sleep(0.15)
     service.create_order(user_id=data["test_user_id"], data=OrderCreate(
-        shipping_address="123 Test St",
+        shipping_address="555 Test St",
         shipping_city="Test City",
         shipping_postal_code="12345",
         shipping_country="Testland",
@@ -253,10 +254,11 @@ def test_get_all_orders_with_limit_order_desc(seeded_test_db):
                                unit_price=data["products"][0].price)],
     )).id
 
-    filters = GetOrdersQueryParams(status_id=ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PENDING],
+    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.PENDING.value,
                                    limit=1)
     results = service.get_all_orders(filters)
+    new_order_created_at = results[0].created_at.astimezone(timezone.utc)
 
     assert len(results) == 1
-    assert now > results[0].created_at.astimezone(timezone.utc)
-    assert results[0].status_id == ORDER_STATUS_NAME_TO_ID[OrderStatusEnum.PENDING]
+    assert new_order_created_at > pre_create_time
+    assert results[0].status_id == OrderStatusEnum.PENDING.value

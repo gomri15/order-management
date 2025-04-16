@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from fastapi.testclient import TestClient
+from app.enums.order_status import OrderStatusEnum
 from app.main import app
 from app.schemas.orders import OrderCreate, OrderItemRead, OrderUpdate
 from app.tests.intergration.conftest import auth_header, create_random_products
@@ -12,14 +13,14 @@ def assert_order_response(order_response, expected_order, expected_items, expect
     """
     Generic function to assert order details in the response.
     """
-    assert order_response["shipping_address"] == expected_order.shipping_address
-    assert order_response["shipping_city"] == expected_order.shipping_city
-    assert order_response["shipping_postal_code"] == expected_order.shipping_postal_code
-    assert order_response["shipping_country"] == expected_order.shipping_country
+    assert order_response["shipping_address"] == expected_order.shipping_address, "failed assert shipping_address"
+    assert order_response["shipping_city"] == expected_order.shipping_city, "failed assert shipping_city"
+    assert order_response["shipping_postal_code"] == expected_order.shipping_postal_code, "failed assert shipping_postal_code"
+    assert order_response["shipping_country"] == expected_order.shipping_country, "failed assert shipping_country"
     if expected_status_id is not None:
-        assert order_response["status_id"] == expected_status_id
+        assert order_response["status_id"] == expected_status_id, "failed assert status_id"
     if expected_user_id is not None:
-        assert order_response["user_id"] == expected_user_id
+        assert order_response["user_id"] == expected_user_id, "failed assert user_id"
     assert len(order_response["items"]) == len(expected_items)
     expected_product_ids = [str(p.product_id) for p in expected_items]
     actual_product_ids = [item["product_id"] for item in order_response["items"]]
@@ -35,7 +36,7 @@ def assert_order_response(order_response, expected_order, expected_items, expect
 
 def test_create_order_success(test_user, db):
     products = create_random_products(db, count=3)
-    items = [OrderItemRead(product_id=p.id, quantity=2) for p in products]
+    items = [OrderItemRead(product_id=p.id, quantity=2, unit_price=2.3) for p in products]
     order_payload = OrderCreate(
         items=items,
         shipping_address="123 Python Way",
@@ -56,7 +57,7 @@ def test_create_order_success(test_user, db):
 
 def test_get_order_success(test_user, db):
     products = create_random_products(db, count=3)
-    items = [OrderItemRead(product_id=p.id, quantity=2) for p in products]
+    items = [OrderItemRead(product_id=p.id, quantity=2, unit_price=2.3) for p in products]
     order_payload = OrderCreate(
         items=items,
         shipping_address="123 Python Way",
@@ -85,7 +86,7 @@ def test_get_order_success(test_user, db):
 
 def test_order_update(test_user, db):
     products = create_random_products(db, count=3)
-    items = [OrderItemRead(product_id=p.id, quantity=2) for p in products]
+    items = [OrderItemRead(product_id=p.id, quantity=2, unit_price=2.3) for p in products]
     order_payload = OrderCreate(
         items=items,
         shipping_address="123 Python Way",
@@ -103,7 +104,7 @@ def test_order_update(test_user, db):
     order_id = response.json()["id"]
 
     # Update the order
-    updated_items = [OrderItemRead(product_id=p.id, quantity=3) for p in products]
+    updated_items = [OrderItemRead(product_id=p.id, quantity=3, unit_price=2.3) for p in products]
     updated_order_payload = OrderUpdate(
         items=updated_items,
         shipping_address="456 Updated St",
@@ -125,7 +126,7 @@ def test_order_update(test_user, db):
 
 def test_get_users_orders(test_user, db):
     products = create_random_products(db, count=3)
-    items = [OrderItemRead(product_id=p.id, quantity=2) for p in products]
+    items = [OrderItemRead(product_id=p.id, quantity=2, unit_price=2.3) for p in products]
     order_payload = OrderCreate(
         items=items,
         shipping_address="123 Python Way",
@@ -166,7 +167,7 @@ def test_no_orders_found_for_user(test_user, db):
 
 def test_filter_users_orders_by_status_id(test_user, db):
     products1 = create_random_products(db, count=3)
-    items = [OrderItemRead(product_id=p.id, quantity=2) for p in products1]
+    items = [OrderItemRead(product_id=p.id, quantity=2, unit_price=2.3) for p in products1]
     order_payload = OrderCreate(
         items=items,
         shipping_address="123 Python Way",
@@ -175,15 +176,7 @@ def test_filter_users_orders_by_status_id(test_user, db):
         shipping_country="Testland"
     )
 
-    products2 = create_random_products(db, count=3)
-    items2 = [OrderItemRead(product_id=p.id, quantity=2) for p in products2]
-    order_payload2 = OrderCreate(
-        items=items2,
-        shipping_address="123 Python Way",
-        shipping_city="Testville",
-        shipping_postal_code="45678",
-        shipping_country="Testland"
-    )
+    order_payload2 = order_payload.model_copy()
 
     create_response1 = client.post(
         f"/orders",
@@ -194,8 +187,8 @@ def test_filter_users_orders_by_status_id(test_user, db):
     order_id1 = create_response1.json()["id"]
 
     # Update the order
-    updated_items = [OrderItemRead(product_id=p.id, quantity=3) for p in products1]
-    updated_status_id = 2
+    updated_items = [OrderItemRead(product_id=p.id, quantity=3, unit_price=44) for p in products1]
+    updated_status_id = OrderStatusEnum.PROCESSED.value
     updated_order_payload = OrderUpdate(
         items=updated_items,
         shipping_address="456 Updated St",
@@ -235,7 +228,7 @@ def test_filter_users_orders_by_status_id(test_user, db):
 
 def test_filter_users_orders_by_created_at_bigger_than(test_user, db):
     products1 = create_random_products(db, count=3)
-    items = [OrderItemRead(product_id=p.id, quantity=2) for p in products1]
+    items = [OrderItemRead(product_id=p.id, quantity=2, unit_price=2.3) for p in products1]
     order_payload = OrderCreate(
         items=items,
         shipping_address="123 Python Way",
@@ -245,7 +238,7 @@ def test_filter_users_orders_by_created_at_bigger_than(test_user, db):
     )
 
     products2 = create_random_products(db, count=3)
-    items2 = [OrderItemRead(product_id=p.id, quantity=2) for p in products2]
+    items2 = [OrderItemRead(product_id=p.id, quantity=2, unit_price=2.3) for p in products2]
     order_payload2 = OrderCreate(
         items=items2,
         shipping_address="123 Python Way",
@@ -286,7 +279,7 @@ def test_filter_users_orders_by_created_at_bigger_than(test_user, db):
 
 def test_get_limit(test_user, db):
     products1 = create_random_products(db, count=3)
-    items = [OrderItemRead(product_id=p.id, quantity=2) for p in products1]
+    items = [OrderItemRead(product_id=p.id, quantity=2, unit_price=2.3) for p in products1]
     order_payload = OrderCreate(
         items=items,
         shipping_address="123 Python Way",
@@ -296,7 +289,7 @@ def test_get_limit(test_user, db):
     )
 
     products2 = create_random_products(db, count=3)
-    items2 = [OrderItemRead(product_id=p.id, quantity=2) for p in products2]
+    items2 = [OrderItemRead(product_id=p.id, quantity=2, unit_price=2.3) for p in products2]
     order_payload2 = OrderCreate(
         items=items2,
         shipping_address="123 Python Way",
@@ -329,7 +322,7 @@ def test_get_limit(test_user, db):
 
 def test_order_multiple_filters(test_user, db):
     products1 = create_random_products(db, count=3)
-    items = [OrderItemRead(product_id=p.id, quantity=2) for p in products1]
+    items = [OrderItemRead(product_id=p.id, quantity=2, unit_price=2.3) for p in products1]
     order_payload = OrderCreate(
         items=items,
         shipping_address="123 Python Way",
@@ -339,7 +332,7 @@ def test_order_multiple_filters(test_user, db):
     )
 
     products2 = create_random_products(db, count=3)
-    items2 = [OrderItemRead(product_id=p.id, quantity=2) for p in products2]
+    items2 = [OrderItemRead(product_id=p.id, quantity=2, unit_price=2.3) for p in products2]
     order_payload2 = OrderCreate(
         items=items2,
         shipping_address="123 Python Way",
