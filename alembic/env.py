@@ -1,20 +1,20 @@
-from logging.config import fileConfig
 import os
+from logging.config import fileConfig
 
+from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from alembic import context
-
 from app.db.database import Base
-
-import os
+from app.db.models import Order  # noqa
+from app.db.models import Product  # noqa
+from app.db.models import User  # noqa
 
 POSTGRES_USER = os.getenv("POSTGRES_USER")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 POSTGRES_DB = os.getenv("POSTGRES_DB")
-POSTGRES_HOST = os.getenv("POSTGRES_HOST",)
-POSTGRES_PORT = os.getenv("POSTGRES_PORT",)
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", )
+POSTGRES_PORT = os.getenv("POSTGRES_PORT", )
 
 DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 
@@ -38,6 +38,7 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
+
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
