@@ -44,8 +44,7 @@ class OrderRead(OrderBase):
     created_at: datetime
     items: List[OrderItemCreate]
     status_id: int
-
-    model_config = {"from_attributes": True}
+    total_price: float
 
 
 class GetOrdersQueryParams(BaseModel):

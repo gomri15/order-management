@@ -25,6 +25,7 @@ class OrderService:
             shipping_city=data.shipping_city,
             shipping_postal_code=data.shipping_postal_code,
             shipping_country=data.shipping_country,
+            total_price=self._get_total_price(data)
         )
         self.db.add(order)
         self.db.flush()  # so order.id is available
@@ -39,7 +40,7 @@ class OrderService:
                 order_id=order.id,
                 product_id=product.id,
                 quantity=item.quantity,
-                unit_price=product.price,
+                unit_price=product.price
             )
             self.db.add(order_item)
 
@@ -87,6 +88,11 @@ class OrderService:
         return query
 
     def update_order(self, order: Order, data: OrderUpdate) -> Order:
+        if order.items == data.items:
+            order.total_price = data.total_price
+        else:
+            order.total_price = self._get_total_price(data)
+
         order.shipping_address = data.shipping_address
         order.shipping_city = data.shipping_city
         order.shipping_postal_code = data.shipping_postal_code
@@ -111,3 +117,6 @@ class OrderService:
         self.db.commit()
         self.db.refresh(order)
         return order
+
+    def _get_total_price(self, order: OrderBase) -> float:
+        return sum(item.unit_price * item.quantity for item in order.items)

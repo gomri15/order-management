@@ -373,3 +373,27 @@ def test_order_multiple_filters(test_user, db):
         items2,
         expected_status_id=1
     )
+
+
+def test_create_order_with_zero_quantity_fails(test_user):
+    invalid_payload = {
+        "items": [
+            {
+                "product_id": str(uuid4()),
+                "quantity": 0,
+                "unit_price": 2.30
+            }
+        ],
+        "shipping_address": "123 Python Way",
+        "shipping_city": "Testville",
+        "shipping_postal_code": "45678",
+        "shipping_country": "Testland"
+    }
+
+    response = client.post(
+        "/orders",
+        headers=auth_header(str(test_user.id)),
+        json=invalid_payload
+    )
+
+    assert response.status_code == 422

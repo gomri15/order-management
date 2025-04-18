@@ -69,15 +69,18 @@ def test_get_orders_by_user(seeded_test_db):
             )],
         ),
     ).id
-    order_update = OrderUpdate(status_id=OrderStatusEnum.PROCESSED.value,
-                               shipping_address="456 Test St",
-                               shipping_city="Test City",
-                               shipping_postal_code="54321",
-                               shipping_country="Testland",
-                               items=[OrderItemCreate(product_id=data["products"][0].id,
-                                                      quantity=2,
-                                                      unit_price=data["products"][0].price)]
-                               )
+    order_update = OrderUpdate(
+        status_id=OrderStatusEnum.PROCESSED.value,
+        shipping_address="456 Test St",
+        shipping_city="Test City",
+        shipping_postal_code="54321",
+        shipping_country="Testland",
+        items=[OrderItemCreate(
+            product_id=data["products"][0].id,
+            quantity=2,
+            unit_price=data["products"][0].price
+            )]
+        )
     order = service.get_order(order_id=order_id, user_id=data["test_user_id"])
     service.update_order(order=order, data=order_update)
     results = service.get_orders_by_user(user_id=data["test_user_id"], filters=filters)
@@ -87,12 +90,29 @@ def test_get_orders_by_user(seeded_test_db):
     assert str(results[0].user_id) == str(data["test_user_id"])
 
 
+def test_update_order_items_changes_order_total_price(seeded_test_db):
+    db, data = seeded_test_db
+    service = OrderService(db=db)
+
+    order_id = data["orders"][0].id
+    order = service.get_order(order_id=order_id, user_id=data["test_user_id"])
+    order_update = OrderUpdate(
+        status_id=OrderStatusEnum.PROCESSED.value, shipping_address="456 Test St", shipping_city="Test City",
+        shipping_postal_code="54321",
+        shipping_country="Testland",
+        items=[OrderItemCreate(product_id=data["products"][0].id, quantity=5, unit_price=5)]
+    )
+    service.update_order(order=order, data=order_update)
+    updated_order = service.get_order(order_id=order_id, user_id=data["test_user_id"])
+
+    assert updated_order.total_price == service._get_total_price(order_update)
+
+
 def test_get_orders_by_user_limit_zero(seeded_test_db):
     db, data = seeded_test_db
     service = OrderService(db=db)
 
-    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.DELIVERED.value,
-                                   limit=0)
+    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.DELIVERED.value, limit=0)
     results = service.get_orders_by_user(user_id=data["test_user_id"], filters=filters)
 
     assert len(results) == 0
@@ -102,8 +122,7 @@ def test_get_orders_by_user_with_unknown_user_id(seeded_test_db):
     db, data = seeded_test_db
     service = OrderService(db=db)
 
-    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.DELIVERED.value,
-                                   limit=1)
+    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.DELIVERED.value, limit=1)
     results = service.get_orders_by_user(user_id=uuid.uuid4(), filters=filters)
 
     assert len(results) == 0
@@ -116,31 +135,18 @@ def test_get_orders_limit(seeded_test_db):
     order_id = service.create_order(
         user_id=data["test_user_id"],
         data=OrderCreate(
-            shipping_address="123 Test St",
-            shipping_city="Test City",
-            shipping_postal_code="12345",
-            shipping_country="Testland",
-            items=[OrderItemCreate(
-                product_id=product_id,
-                quantity=2,
-                unit_price=100.0,
-            )],
-        ),
-    ).id
+            shipping_address="123 Test St", shipping_city="Test City", shipping_postal_code="12345", shipping_country="Testland",
+            items=[OrderItemCreate(product_id=product_id, quantity=2, unit_price=100.0, )], ), ).id
 
     order = service.get_order(order_id=order_id, user_id=data["test_user_id"])
-    order_update = OrderUpdate(status_id=OrderStatusEnum.PROCESSED.value,
-                               shipping_address="456 Test St",
-                               shipping_city="Test City",
-                               shipping_postal_code="54321",
-                               shipping_country="Testland",
-                               items=[OrderItemCreate(product_id=data["products"][0].id,
-                                                      quantity=2,
-                                                      unit_price=data["products"][0].price)]
-                               )
+    order_update = OrderUpdate(
+        status_id=OrderStatusEnum.PROCESSED.value, shipping_address="456 Test St", shipping_city="Test City",
+        shipping_postal_code="54321",
+        shipping_country="Testland",
+        items=[OrderItemCreate(product_id=data["products"][0].id, quantity=2, unit_price=data["products"][0].price)]
+    )
     service.update_order(order=order, data=order_update)
-    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.PROCESSED.value,
-                                   limit=1)
+    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.PROCESSED.value, limit=1)
     results = service.get_orders_by_user(user_id=data["test_user_id"], filters=filters)
 
     assert len(results) == 1
@@ -162,17 +168,17 @@ def test_get_order_items_raises_for_order_with_no_items(seeded_test_db):
     db, data = seeded_test_db
     service = OrderService(db=db)
 
-    order_id = uuid.uuid4()
-    service.create_order(user_id=data["test_user_id"], data=OrderCreate(
-        shipping_address="123 Test St",
-        shipping_city="Test City",
-        shipping_postal_code="12345",
-        shipping_country="Testland",
-        items=[],
-    ))
-
-    with pytest.raises(NotFoundError) as excinfo:
-        service.get_order_items(order_id=order_id)
+    with pytest.raises(NotFoundError):
+        service.create_order(
+            user_id=data["test_user_id"],
+            data=OrderCreate(
+                shipping_address="123 Test St",
+                shipping_city="Test City",
+                shipping_postal_code="12345",
+                shipping_country="Testland",
+                items=[]
+            )
+        )
 
 
 def test_get_order_items_raises_for_nonexistent_order(seeded_test_db):
@@ -187,17 +193,13 @@ def test_get_all_orders_with_multiple_filters(seeded_test_db):
     service = OrderService(db)
 
     now = datetime.now(tz=UTC)
-    order_id = service.create_order(user_id=data["test_user_id"], data=OrderCreate(
-        shipping_address="123 Test St",
-        shipping_city="Test City",
-        shipping_postal_code="12345",
-        shipping_country="Testland",
-        items=[OrderItemCreate(product_id=data["products"][0].id,
-                               quantity=2,
-                               unit_price=data["products"][0].price)],
-    )).id
-    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.PENDING.value,
-                                   created_at=now)
+    order_id = service.create_order(
+        user_id=data["test_user_id"],
+        data=OrderCreate(
+            shipping_address="123 Test St", shipping_city="Test City", shipping_postal_code="12345", shipping_country="Testland",
+            items=[OrderItemCreate(product_id=data["products"][0].id, quantity=2, unit_price=data["products"][0].price)], )
+    ).id
+    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.PENDING.value, created_at=now)
 
     results = service.get_all_orders(filters)
 
@@ -210,26 +212,20 @@ def test_get_all_orders_with_status_id(seeded_test_db):
     db, data = seeded_test_db
     service = OrderService(db)
 
-    order_id = service.create_order(user_id=data["test_user_id"], data=OrderCreate(
-        shipping_address="123 Test St",
-        shipping_city="Test City",
-        shipping_postal_code="12345",
-        shipping_country="Testland",
-        items=[OrderItemCreate(product_id=data["products"][0].id,
-                               quantity=2,
-                               unit_price=data["products"][0].price)],
-    )).id
+    order_id = service.create_order(
+        user_id=data["test_user_id"],
+        data=OrderCreate(
+            shipping_address="123 Test St", shipping_city="Test City", shipping_postal_code="12345", shipping_country="Testland",
+            items=[OrderItemCreate(product_id=data["products"][0].id, quantity=2, unit_price=data["products"][0].price)], )
+    ).id
 
     order = service.get_order(order_id=order_id, user_id=data["test_user_id"])
-    order_update = OrderUpdate(status_id=OrderStatusEnum.PROCESSED.value,
-                               shipping_address="456 Test St",
-                               shipping_city="Test City",
-                               shipping_postal_code="54321",
-                               shipping_country="Testland",
-                               items=[OrderItemCreate(product_id=data["products"][0].id,
-                                                      quantity=2,
-                                                      unit_price=data["products"][0].price)]
-                               )
+    order_update = OrderUpdate(
+        status_id=OrderStatusEnum.PROCESSED.value, shipping_address="456 Test St", shipping_city="Test City",
+        shipping_postal_code="54321",
+        shipping_country="Testland",
+        items=[OrderItemCreate(product_id=data["products"][0].id, quantity=2, unit_price=data["products"][0].price)]
+    )
     service.update_order(order=order, data=order_update)
     filters = GetOrdersQueryParams(status_id=OrderStatusEnum.PROCESSED.value)
 
@@ -245,21 +241,38 @@ def test_get_all_orders_with_limit_order_desc(seeded_test_db):
     service = OrderService(db)
     pre_create_time = datetime.now(tz=UTC)
     sleep(0.15)
-    service.create_order(user_id=data["test_user_id"], data=OrderCreate(
-        shipping_address="555 Test St",
-        shipping_city="Test City",
-        shipping_postal_code="12345",
-        shipping_country="Testland",
-        items=[OrderItemCreate(product_id=data["products"][0].id,
-                               quantity=2,
-                               unit_price=data["products"][0].price)],
-    )).id
+    _ = service.create_order(
+        user_id=data["test_user_id"],
+        data=OrderCreate(
+            shipping_address="555 Test St", shipping_city="Test City", shipping_postal_code="12345", shipping_country="Testland",
+            items=[OrderItemCreate(product_id=data["products"][0].id, quantity=2, unit_price=data["products"][0].price)], )
+    ).id
 
-    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.PENDING.value,
-                                   limit=1)
+    filters = GetOrdersQueryParams(status_id=OrderStatusEnum.PENDING.value, limit=1)
     results = service.get_all_orders(filters)
     new_order_created_at = results[0].created_at.astimezone(timezone.utc)
 
     assert len(results) == 1
     assert new_order_created_at > pre_create_time
     assert results[0].status_id == OrderStatusEnum.PENDING.value
+
+
+def test_raise_if_order_item_quantity_zero(seeded_test_db):
+    db, data = seeded_test_db
+    service = OrderService(db=db)
+
+    with pytest.raises(ValueError):
+        service.create_order(
+            user_id=data["test_user_id"],
+            data=OrderCreate(
+                shipping_address="123 Test St",
+                shipping_city="Test City",
+                shipping_postal_code="12345",
+                shipping_country="Testland",
+                items=[OrderItemCreate(
+                    product_id=data["products"][0].id,
+                    quantity=0,
+                    unit_price=data["products"][0].price,
+                )],
+            )
+        )

@@ -42,6 +42,7 @@ class Order(Base):
     shipping_city = Column(String, nullable=False)
     shipping_postal_code = Column(String, nullable=False)
     shipping_country = Column(String, nullable=False)
+    total_price = Column(Numeric(10, 2), nullable=False, default=0.00)
 
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     user = relationship("User", back_populates="orders")
