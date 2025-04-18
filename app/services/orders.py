@@ -15,6 +15,9 @@ class OrderService:
 
     # TODO: make sure there is item in order before creating order
     def create_order(self, user_id: UUID, data: OrderCreate) -> Order:
+        if not data.items:
+            raise NotFoundError("Order must have at least one item")
+
         order = Order(
             user_id=user_id,
             status_id=OrderStatusEnum.PENDING.value,

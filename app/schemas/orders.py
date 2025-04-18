@@ -10,7 +10,7 @@ class OrderItemCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     product_id: UUID4
-    quantity: int
+    quantity: int = Field(gt=0)
     unit_price: float
 
 
