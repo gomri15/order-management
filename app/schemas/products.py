@@ -1,8 +1,10 @@
 # app/schemas/product.py
 
-from pydantic import BaseModel
 from typing import Optional
 from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
+
 
 class ProductBase(BaseModel):
     name: str
@@ -11,8 +13,10 @@ class ProductBase(BaseModel):
     sku: str
     inventory_count: int
 
+
 class ProductCreate(ProductBase):
     pass
+
 
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
@@ -21,8 +25,8 @@ class ProductUpdate(BaseModel):
     sku: Optional[str] = None
     inventory_count: Optional[int] = None
 
-class ProductRead(ProductBase):
-    id: UUID
 
-    class Config:
-        from_attributes = True  # required in Pydantic v2 to populate from SQLAlchemy model
+class ProductRead(ProductBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID

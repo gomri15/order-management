@@ -1,6 +1,7 @@
 from typing import Optional
 from uuid import UUID
-from pydantic import BaseModel, EmailStr
+
+from pydantic import BaseModel, EmailStr, ConfigDict
 
 
 class UserBase(BaseModel):
@@ -13,10 +14,9 @@ class UserCreate(UserBase):
 
 
 class UserResponse(UserBase):
-    id: UUID
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True  # Allows converting SQLAlchemy models to Pydantic
+    id: UUID
 
 
 class UserLogin(BaseModel):

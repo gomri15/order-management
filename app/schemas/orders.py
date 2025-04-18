@@ -7,11 +7,11 @@ from app.enums.order_status import OrderStatusEnum
 
 
 class OrderItemCreate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     product_id: UUID4
     quantity: int
     unit_price: float
-
-    model_config = {"from_attributes": True}
 
 
 class OrderItemRead(BaseModel):
@@ -37,6 +37,8 @@ class OrderUpdate(OrderBase):
 
 
 class OrderRead(OrderBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID4
     user_id: UUID4
     created_at: datetime
@@ -47,9 +49,8 @@ class OrderRead(OrderBase):
 
 
 class GetOrdersQueryParams(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     created_at: Optional[datetime] = Field(default=None, alias="createdAt")
     status_id: int = Field(OrderStatusEnum.PENDING.value, alias="statusId")
     limit: Optional[int] = Field(default=10)
-
-    class Config:
-        populate_by_name = True
