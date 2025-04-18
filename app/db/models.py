@@ -1,7 +1,9 @@
-from datetime import datetime, timezone
 import uuid
-from sqlalchemy import UUID, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from datetime import datetime, timezone
+
+from sqlalchemy import UUID, Column, DateTime, Float, ForeignKey, Integer, String, Text, Numeric
 from sqlalchemy.orm import relationship
+
 from app.db.database import Base
 
 

@@ -1,13 +1,14 @@
-from datetime import UTC, datetime, timezone
 import logging
-from time import sleep
 import uuid
+from datetime import UTC, datetime, timezone
+from time import sleep
 
 import pytest
+
 from app.core.errors import NotFoundError
 from app.db.models import Order
 from app.enums.order_status import OrderStatusEnum
-from app.schemas.orders import GetOrdersQueryParams, OrderCreate, OrderItemCreate, OrderItemRead, OrderUpdate
+from app.schemas.orders import GetOrdersQueryParams, OrderCreate, OrderItemCreate, OrderUpdate
 from app.services.orders import OrderService
 
 order_service_test_logger = logging.getLogger(__name__)

@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
+from faker import Faker
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -15,7 +16,6 @@ from app.schemas.products import ProductCreate
 from app.services.orders import OrderService
 from app.services.products import ProductService
 from app.services.users import UserService
-from faker import Faker
 
 faker = Faker()
 

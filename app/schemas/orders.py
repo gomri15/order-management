@@ -1,6 +1,7 @@
 from datetime import datetime
-from pydantic import BaseModel, UUID4, Field
 from typing import List, Optional
+
+from pydantic import BaseModel, UUID4, Field, ConfigDict
 
 from app.enums.order_status import OrderStatusEnum
 

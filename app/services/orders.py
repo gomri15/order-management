@@ -1,11 +1,12 @@
 from typing import List
-from sqlalchemy.orm import Session, Query
 from uuid import UUID
+
+from sqlalchemy.orm import Session, Query
 
 from app.core.errors import NotFoundError
 from app.db.models import Order, OrderItem, Product
 from app.enums.order_status import OrderStatusEnum
-from app.schemas.orders import GetOrdersQueryParams, OrderCreate, OrderUpdate
+from app.schemas.orders import GetOrdersQueryParams, OrderCreate, OrderUpdate, OrderBase
 
 
 class OrderService:

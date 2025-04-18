@@ -1,10 +1,13 @@
 from datetime import datetime, timezone
+from urllib.parse import quote
+from uuid import uuid4
+
 from fastapi.testclient import TestClient
+
 from app.enums.order_status import OrderStatusEnum
 from app.main import app
 from app.schemas.orders import OrderCreate, OrderItemRead, OrderUpdate
 from app.tests.intergration.conftest import auth_header, create_random_products
-from urllib.parse import quote
 
 client = TestClient(app)
 
