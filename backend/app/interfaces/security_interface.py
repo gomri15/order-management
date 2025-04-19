@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import timedelta
 
+
 class ISecurityService(ABC):
     @abstractmethod
     def hash_password(self, password: str) -> str:

@@ -3,7 +3,7 @@
 services:
   api:
     build:
-      context: ./
+      context: ./backend
       dockerfile: Dockerfile
     env_file: ./docker.env
     environment:
@@ -35,7 +35,7 @@ services:
 
   jobs-runner:
     build:
-      context: ./
+      context: ./backend
       dockerfile: Dockerfile
     env_file: ./docker.env
     environment:
@@ -51,7 +51,7 @@ services:
 
   workflows-worker:
     build:
-      context: ./
+      context: ./backend
       dockerfile: Dockerfile
     command: bash -c "./docker_scripts/wait-for-it.sh postgres:5432; ./docker_scripts/start_api.sh"
     env_file: ./docker.env
@@ -73,7 +73,7 @@ services:
 
   workflows-backend:
     build:
-      context: ./
+      context: ./backend
       dockerfile: Dockerfile
     env_file: ./docker.env
     environment:
@@ -98,7 +98,7 @@ services:
 
   code-executor:
     build:
-      context: ./
+      context: ./backend
       dockerfile: CodeExecutor.Dockerfile
     command: bash -c "./start.sh"
     env_file: ./docker.env
@@ -204,13 +204,13 @@ services:
 
   app:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile.order_mgmt
     env_file: order-app.env
     container_name: order-app
 
     volumes:
-      - .:/app # this mounts your source code
+      - ./backend:/app # this mounts your source code
     working_dir: /app
     depends_on:
       - order-app-db
