@@ -1,9 +1,11 @@
 from uuid import UUID
-from app.core.errors import NoChangeError
+
 from sqlalchemy.orm import Session
-from app.db.models import User
-from app.schemas.users import UserCreate, UserLogin, UserResponse, UserUpdate
+
+from app.core.errors import NoChangeError
 from app.core.security import SecurityService
+from app.db.models import User
+from app.schemas.users import UserCreate, UserLogin, UserUpdate
 
 
 class UserService:
