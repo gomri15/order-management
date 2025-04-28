@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>User Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 500px;
+            margin: auto;
+        }
+
+        input {
+            display: block;
+            margin: 10px 0;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px;
+            width: 100%;
+        }
+
+        .info {
+            margin-top: 20px;
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 6px;
+        }
+    </style>
+    <script src="./js/userPage.js" type="module"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch("nav.html")
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById("navbar").innerHTML = data;
+                })
+                .catch(error => console.error('Error loading navbar:', error));
+        });
+    </script>
+</head>
+<body>
+<div id="navbar"></div>
+<h1>👤 User Profile</h1>
+
+
+<div class="info" id="user-info">
+    Loading user info...
+</div>
+
+<h2>🔧 Update Info</h2>
+<input id="email" type="email" placeholder="New email"/>
+<input id="name" placeholder="New name"/>
+<button id="update-button">💾 Update</button>
+
+</body>
+</html>

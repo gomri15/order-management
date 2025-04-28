@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>My Orders</title>
+</head>
+<div id="navbar"></div>
+<body>
+<h1>My Orders</h1>
+
+<ul id="orders-list"></ul>
+
+
+<script src="js/utils.js"></script>
+<script>
+    const token = getToken();
+
+    document.addEventListener("DOMContentLoaded", () => {
+        fetch("nav.html")
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("navbar").innerHTML = data;
+            })
+            .catch(error => console.error('Error loading navbar:', error));
+    });
+
+    async function loadOrders() {
+        const list = document.getElementById("orders-list");
+
+        try {
+            const res = await fetch("http://localhost:8000/orders/", {
+                headers: {Authorization: `Bearer ${token}`}
+            });
+
+            if (!res.ok) throw new Error("Failed to fetch orders");
+
+            const orders = await res.json();
+
+            orders.forEach(order => {
+                const li = document.createElement("li");
+                li.textContent = `Order #${order.id} — Status: ${order.status_id}`;
+                list.appendChild(li);
+            });
+
+        } catch (err) {
+            const li = document.createElement("li");
+            li.textContent = "Error: " + err.message;
+            list.appendChild(li);
+        }
+    }
+
+    window.onload = loadOrders;
+</script>
+</body>
+</html>
