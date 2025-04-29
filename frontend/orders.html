@@ -28,7 +28,7 @@
         const list = document.getElementById("orders-list");
 
         try {
-            const res = await fetch("http://localhost:8000/orders/", {
+            const res = await fetch("/api/orders/", {
                 headers: {Authorization: `Bearer ${token}`}
             });
 

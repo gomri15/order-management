@@ -11,7 +11,7 @@ async function loadUser() {
     const token = getTokenOrRedirect();
 
     try {
-        const user = await fetchWithAuth("http://localhost:8000/users/current", token);
+        const user = await fetchWithAuth("/api/users/current", token);
 
         Object.assign(currentUser, user);
 
@@ -36,7 +36,7 @@ async function updateProfile() {
         return;
     }
 
-    fetchWithAuth(`http://localhost:8000/users/${currentUser.id}`, token, {
+    fetchWithAuth(`/api/users/${currentUser.id}`, token, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json"

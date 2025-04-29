@@ -36,7 +36,7 @@
         list.innerHTML = "";
 
         try {
-            const res = await fetch("http://localhost:8000/products/", {
+            const res = await fetch("/api/products/", {
                 headers: {Authorization: `Bearer ${token}`}
             });
 
@@ -97,7 +97,7 @@
         };
 
         try {
-            const res = await fetch("http://localhost:8000/orders/", {
+            const res = await fetch("/api/orders/", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

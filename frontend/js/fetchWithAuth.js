@@ -10,7 +10,7 @@ export async function fetchWithAuth(url, token, options = {}) {
         });
 
         if (res.status === 401 || res.status === 403) {
-            window.location.href = "/login";
+            window.location.href = "/api/login";
             throw new Error("Unauthorized access. Redirecting to login.");
         }
 
