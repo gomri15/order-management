@@ -4,7 +4,7 @@ FROM nginx:latest
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy ONLY frontend files into nginx
-COPY frontend/ /usr/share/nginx/html
+COPY . /usr/share/nginx/html
 
 EXPOSE 80
 

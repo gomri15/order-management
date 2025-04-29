@@ -1,28 +1,26 @@
-# Use as is if using self-managed Temporal cluster deployed alongside Retool
-# Compare other deployment options here: https://docs.retool.com/self-hosted/concepts/temporal#compare-options
 services:
-  order-app-db:
+  orders-db:
     image: postgres:15
-    container_name: order_db
+    container_name: orders-db
     env_file: ./backend/order-app.env
     volumes:
       - order-app-data:/var/lib/postgresql/data
     networks:
       - private-order-app-network
 
-  app:
+  orders-backend:
     build:
       context: ./backend
       dockerfile: Dockerfile.order_mgmt
     env_file: ./backend/order-app.env
-    container_name: order-app
+    container_name: orders-backend
     volumes:
-      - ./backend:/app # this mounts your source code
+      - ./backend:/app
     working_dir: /app
     depends_on:
-      - order-app-db
-    ports:
-      - "8000:8000"
+      - orders-db
+    expose:
+      - "8000"
     command:
       [
         "uvicorn",
@@ -34,22 +32,34 @@ services:
         "--reload",
       ]
     networks:
-      - frontend-network
+      - app-network
       - private-order-app-network
 
-  frontend:
+  orders-frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    container_name: frontend-container
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: orders-frontend
+    expose:
+      - "80"
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "80:80"
+    depends_on:
+      - orders-frontend
+      - orders-backend
     networks:
-      - frontend-network
-
+      - app-network
 
 networks:
-  frontend-network:
+  app-network:
   private-order-app-network:
 
 volumes:
