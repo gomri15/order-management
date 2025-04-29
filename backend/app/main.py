@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import orders, products, users
 from app.auth.dependencies import get_current_user
 
-app = FastAPI(title="Order Management System", version="1.0")
+app = FastAPI(title="Order Management System", version="1.0", root_path="/api")
 
 app.add_middleware(
     CORSMiddleware,
