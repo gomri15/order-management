@@ -40,7 +40,8 @@ class OrderService:
                 order_id=order.id,
                 product_id=product.id,
                 quantity=item.quantity,
-                unit_price=product.price
+                unit_price=product.price,
+                product_display_name=product.name
             )
             self.db.add(order_item)
 
