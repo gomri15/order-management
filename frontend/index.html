@@ -7,7 +7,6 @@
 <body>
 <div id="navbar"></div>
 
-<button onclick="loadProducts()">Load Products</button>
 <ul id="product-list"></ul>
 
 <h2>🛒 Cart</h2>
@@ -24,6 +23,8 @@
                 document.getElementById("navbar").innerHTML = data;
             })
             .catch(error => console.error('Error loading navbar:', error));
+
+        loadProducts()
     });
 
     let cart = {}; // { product_id: quantity }
