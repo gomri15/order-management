@@ -18,6 +18,7 @@ class OrderItemRead(BaseModel):
     product_id: UUID4
     quantity: int
     unit_price: float
+    product_display_name: str
 
 
 class OrderBase(BaseModel):
