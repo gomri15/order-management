@@ -85,8 +85,42 @@
     }
 
     function addToCart(product) {
-        cart[product.id] = (cart[product.id] || 0) + 1;
+        if (cart[product.id]) {
+            alert("Product already in cart!");
+            return;
+        }
+        cart[product.id] = 1;
         renderCart();
+    }
+
+    function createPlusBtn(id) {
+        const plusBtn = document.createElement("button");
+        plusBtn.textContent = "+";
+        plusBtn.onclick = () => {
+            cart[id] += 1;
+            renderCart();
+        };
+        return plusBtn;
+    }
+
+    function createMinusBtn(id) {
+        const minusBtn = document.createElement("button");
+        minusBtn.textContent = "-";
+        minusBtn.onclick = () => {
+            if (cart[id] > 1) {
+                cart[id] -= 1;
+            } else {
+                delete cart[id];
+            }
+            renderCart();
+        };
+        return minusBtn;
+    }
+
+    function createCartItem(product, quantity) {
+        const li = document.createElement("li");
+        li.textContent = `${product.name} × ${quantity}`;
+        return li;
     }
 
     function renderCart() {
@@ -95,9 +129,12 @@
 
         for (const [id, quantity] of Object.entries(cart)) {
             const product = productCache[id];
-            const li = document.createElement("li");
-            li.textContent = `${product.name} × ${quantity}`;
-            cartList.appendChild(li);
+            const cartItem = createCartItem(product, quantity);
+            const minusBtn = createPlusBtn(id);
+            const plusBtn = createMinusBtn(id);
+            cartItem.appendChild(plusBtn);
+            cartItem.appendChild(minusBtn);
+            cartList.appendChild(cartItem);
         }
     }
 
