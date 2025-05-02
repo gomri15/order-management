@@ -26,13 +26,15 @@ def seed_database():
             id=uuid.uuid4(),
             name=faker.name(),
             email=faker.email(),
-            hashed_password=get_password_hash("password123")
+            hashed_password=get_password_hash("password123"),
+            deleted=False
         )
         user2 = User(
             id=uuid.uuid4(),
             name=faker.name(),
             email=faker.email(),
-            hashed_password=get_password_hash("securepassword")
+            hashed_password=get_password_hash("securepassword"),
+            deleted=False
         )
         db.add_all([user1, user2])
         db.commit()
@@ -87,9 +89,9 @@ def seed_database():
         db.commit()
 
         # Seed order items
-        order_item1 = OrderItem(order_id=order1.id, product_id=product1.id, quantity=2, unit_price=product1.price)
-        order_item2 = OrderItem(order_id=order1.id, product_id=product2.id, quantity=1, unit_price=product2.price)
-        order_item3 = OrderItem(order_id=order2.id, product_id=product3.id, quantity=3, unit_price=product3.price)
+        order_item1 = OrderItem(order_id=order1.id, product_id=product1.id, quantity=2, unit_price=product1.price, product_display_name=product1.name)
+        order_item2 = OrderItem(order_id=order1.id, product_id=product2.id, quantity=1, unit_price=product2.price, product_display_name=product2.name)
+        order_item3 = OrderItem(order_id=order2.id, product_id=product3.id, quantity=3, unit_price=product3.price, product_display_name=product3.name)
         db.add_all([order_item1, order_item2, order_item3])
         db.commit()
 
