@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import UUID, Column, DateTime, Float, ForeignKey, Integer, String, Text, Numeric
+from sqlalchemy import UUID, Column, DateTime, Float, ForeignKey, Integer, String, Text, Numeric, Boolean
 from sqlalchemy.orm import relationship
 
 from app.db.database import Base
@@ -15,6 +15,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     name = Column(String, nullable=False)
+    deleted = Column(Boolean, default=False)
 
     orders = relationship("Order", back_populates="user")
 
