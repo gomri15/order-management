@@ -22,6 +22,12 @@ class OrderItemRead(BaseModel):
     product_display_name: str
 
 
+class OrderItemUpdate(BaseModel):
+    quantity: int = Field(gt=0)
+    unit_price: float = Field(gt=0)
+    product_display_name: str
+
+
 class OrderBase(BaseModel):
     items: List[OrderItemCreate]
     shipping_address: str

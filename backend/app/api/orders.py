@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.auth.dependencies import get_current_user
 from app.core.errors import NotFoundError
 from app.db.database import get_db
-from app.schemas.orders import GetOrdersQueryParams, OrderCreate, OrderItemRead, OrderRead, OrderUpdate
+from app.schemas.orders import GetOrdersQueryParams, OrderCreate, OrderItemRead, OrderRead, OrderUpdate, OrderItemUpdate
 from app.services.orders import OrderService
 
 router = APIRouter()
@@ -61,6 +61,25 @@ class OrderAPI:
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
         return order
+
+    @staticmethod
+    @router.put("/{order_id}/{item_id}", response_model=OrderItemRead)
+    def update_order_item(
+            order_id: str,
+            item_id: str,
+            data: OrderItemUpdate,
+            db: Session = Depends(get_db),
+            user=Depends(get_current_user)
+    ) -> OrderRead:
+        service = OrderService(db)
+        item = service.get_order_item(order_id, item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Item not found")
+        try:
+            return service.update_order_item(item, data)
+
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
     @staticmethod
     @router.put("/{order_id}", response_model=OrderRead)

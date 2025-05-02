@@ -7,6 +7,7 @@ from app.core.errors import NotFoundError
 from app.db.models import Order, OrderItem, Product
 from app.enums.order_status import OrderStatusEnum
 from app.schemas.orders import GetOrdersQueryParams, OrderCreate, OrderUpdate, OrderBase
+from app.schemas.orders import GetOrdersQueryParams, OrderCreate, OrderUpdate, OrderBase, OrderItemUpdate
 
 
 class OrderService:
@@ -65,6 +66,14 @@ class OrderService:
 
         return order_items
 
+    def get_order_item(self, order_id: UUID, item_id: UUID) -> OrderItem:
+        order_item = self.db.query(OrderItem).filter_by(order_id=order_id, id=item_id).first()
+
+        if not order_item:
+            raise NotFoundError(f"Order item not found, {item_id}")
+
+        return order_item
+
     def get_all_orders(self, filters: GetOrdersQueryParams) -> List[Order]:
         query = self.db.query(Order)
         query = self._query_orders_by_filter(filters, query)
@@ -121,3 +130,12 @@ class OrderService:
 
     def _get_total_price(self, order: OrderBase) -> float:
         return sum(item.unit_price * item.quantity for item in order.items)
+
+    def update_order_item(self, item: OrderItem, data: OrderItemUpdate):
+        item.quantity = data.quantity
+        item.unit_price = data.unit_price
+        item.product_display_name = data.product_display_name
+
+        self.db.commit()
+        self.db.refresh(item)
+        return item
