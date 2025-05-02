@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -7,6 +8,7 @@ from app.core.security import SecurityService
 from app.db.models import User
 from app.schemas.users import UserCreate, UserLogin, UserUpdate
 
+logger = logging.getLogger(__name__)
 
 class UserService:
     def __init__(self, db: Session, security_service: SecurityService):
@@ -47,3 +49,16 @@ class UserService:
 
     def get_users(self, skip: int = 0, limit: int = 100) -> list[User]:
         return self.db.query(User).offset(skip).limit(limit).all()
+
+    def delete_user(self, user_id):
+        user_to_delete = self.db.query(User).filter(User.id == user_id).first()
+        if user_to_delete.deleted:
+            raise NoChangeError("User already deleted.")
+
+        if not user_to_delete:
+            raise NoChangeError("User not found.")
+
+        user_to_delete.deleted = True
+        logger.info(f"Deleting user {user_id}")
+        self.db.commit()
+        self.db.refresh(user_to_delete)

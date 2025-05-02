@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.models import User
 from app.schemas.users import UserCreate, UserResponse, UserLogin, UserUpdate
+from app.services.orders import OrderService, get_order_service
 from app.services.users import UserService
 from app.core.security import get_security_service, SecurityService
 
@@ -74,3 +75,14 @@ class UserAPI:
             user: User = Depends(get_current_user)  # Assuming get_current_user is defined elsewhere
     ):
         return user
+
+    @staticmethod
+    @router.delete("/admin/{user_id}", response_model=dict)
+    def delete_users(
+            user_id: str,
+            db: Session = Depends(get_db),
+            security_service: SecurityService = Depends(get_security_service)
+    ):
+        user_service = UserService(db, security_service)
+        user_service.delete_user(user_id)
+        return {"message": "User deleted successfully"}

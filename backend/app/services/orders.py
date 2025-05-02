@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session, Query
 from app.core.errors import NotFoundError
 from app.db.models import Order, OrderItem, Product
 from app.enums.order_status import OrderStatusEnum
-from app.schemas.orders import GetOrdersQueryParams, OrderCreate, OrderUpdate, OrderBase
 from app.schemas.orders import GetOrdersQueryParams, OrderCreate, OrderUpdate, OrderBase, OrderItemUpdate
 
 
