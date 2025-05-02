@@ -1,5 +1,4 @@
 from typing import List
-import uuid
 
 from app.auth.dependencies import get_current_user
 from app.core.errors import NoChangeError
@@ -8,7 +7,6 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.models import User
 from app.schemas.users import UserCreate, UserResponse, UserLogin, UserUpdate
-from app.services.orders import OrderService, get_order_service
 from app.services.users import UserService
 from app.core.security import get_security_service, SecurityService
 
