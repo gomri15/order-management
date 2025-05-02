@@ -15,6 +15,7 @@ class OrderItemCreate(BaseModel):
 
 
 class OrderItemRead(BaseModel):
+    id: UUID4
     product_id: UUID4
     quantity: int
     unit_price: float
@@ -43,7 +44,7 @@ class OrderRead(OrderBase):
     id: UUID4
     user_id: UUID4
     created_at: datetime
-    items: List[OrderItemCreate]
+    items: List[OrderItemRead]
     status_id: int
     total_price: float
 
