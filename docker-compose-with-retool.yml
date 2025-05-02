@@ -20,6 +20,7 @@ services:
       - backend-network
       - temporal-network
       - code-executor-network
+      - app-network
     depends_on:
       - postgres
       - retooldb-postgres
@@ -30,24 +31,8 @@ services:
     links:
       - postgres
     ports:
-      - "3000:3000"
+      - "3000"
     restart: on-failure
-
-  # jobs-runner:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
-  #   env_file: ./docker.env
-  #   environment:
-  #     - DEPLOYMENT_TEMPLATE_TYPE=docker-compose
-  #     - SERVICE_TYPE=JOBS_RUNNER
-  #   networks:
-  #     - backend-network
-  #   depends_on:
-  #     - postgres
-  #   command: bash -c "chmod -R +x ./docker_scripts; sync; ./docker_scripts/wait-for-it.sh postgres:5432; ./docker_scripts/start_api.sh"
-  #   links:
-  #     - postgres
 
   workflows-worker:
     build:
@@ -133,12 +118,12 @@ services:
     volumes:
       - retooldb-data:/var/lib/postgresql/data
 
-   # Not required, but leave this container to use nginx for handling the frontend & SSL certification
+    # Not required, but leave this container to use nginx for handling the frontend & SSL certification
   https-portal:
     image: tryretool/https-portal:latest
     ports:
-      - "80:80"
-      - "443:443"
+      - "80"
+      - "443"
     links:
       - api
     restart: always
@@ -193,28 +178,29 @@ services:
     ports:
       - "8080:8080"
 
-  order-app-db:
+  orders-db:
     image: postgres:15
-    container_name: order_db
+    container_name: orders-db
     env_file: ./backend/order-app.env
     volumes:
       - order-app-data:/var/lib/postgresql/data
     networks:
+      - app-network
       - private-order-app-network
 
-  app:
+  orders-backend:
     build:
       context: ./backend
       dockerfile: Dockerfile.order_mgmt
     env_file: ./backend/order-app.env
-    container_name: order-app
+    container_name: orders-backend
     volumes:
-      - ./backend:/app # this mounts your source code
+      - ./backend:/app
     working_dir: /app
     depends_on:
-      - order-app-db
-    ports:
-      - "8000:8000"
+      - orders-db
+    expose:
+      - "8000"
     command:
       [
         "uvicorn",
@@ -226,33 +212,39 @@ services:
         "--reload",
       ]
     networks:
-      - frontend-network
-      - backend-network
+      - app-network
       - private-order-app-network
 
-  # fe:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #     args:
-  #       VITE_API_URL: ${VITE_API_URL} # Pull from .env
-  #   container_name: order-app-fe
-  #   volumes:
-  #     - ./frontend:/app # this mounts your source code
-  #     - node_modules:/app/node_modules
-  #   ports:
-  #     - "5173:5173"
-  #   depends_on:
-  #     - app
-  #   networks:
-  #     - frontend-network
+  orders-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: orders-frontend
+    expose:
+      - "80"
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - orders-frontend
+      - orders-backend
+    networks:
+      - app-network
 
 networks:
-  frontend-network:
   backend-network:
   code-executor-network:
   temporal-network:
   intra-temporal-network:
+  app-network:
+  frontend-network:
   private-order-app-network:
 
 volumes:
