@@ -62,4 +62,3 @@ class OrderItem(Base):
     unit_price = Column(Float, nullable=False)
 
     order = relationship("Order", back_populates="items")
-    product = relationship("Product")
