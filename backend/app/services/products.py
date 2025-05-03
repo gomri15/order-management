@@ -37,4 +37,4 @@ class ProductService:
         self.db.commit()
 
     def list_products(self) -> list[Product]:
-        return self.db.query(Product).all()
+        return self.db.query(Product).filter(Product.deleted == False).all()
