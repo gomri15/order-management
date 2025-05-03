@@ -1,11 +1,28 @@
+import random
 import uuid
 from datetime import datetime, timezone
+
+from bcrypt import hashpw, gensalt
+from faker import Faker
 from sqlalchemy.orm import Session
+
 from app.db.database import SessionLocal
 from app.db.models import User, Product, Order, OrderItem
 from app.enums.order_status import OrderStatusEnum
-from bcrypt import hashpw, gensalt
-from faker import Faker
+
+
+def random_product_name():
+    food_adj = ["spicy", "sweet", "savory", "creamy", "zesty"]
+    food_noun = ["noodles", "burger", "soup", "pancakes", "tart"]
+
+    clothing_adj = ["warm", "soft", "cozy", "light", "casual"]
+    clothing_noun = ["sweater", "jacket", "shirt", "scarf", "hat"]
+
+    food_item = f"{random.choice(food_adj)} {random.choice(food_noun)}"
+    clothing_item = f"{random.choice(clothing_adj)} {random.choice(clothing_noun)}"
+
+    return food_item, clothing_item
+
 
 faker = Faker()
 
@@ -42,21 +59,21 @@ def seed_database():
         # Seed products
         product1 = Product(
             id=uuid.uuid4(),
-            name="Product A",
+            name=random_product_name(),
             price=10.99,
             inventory_count=100,
             sku=faker.unique.ean(length=8)
         )
         product2 = Product(
             id=uuid.uuid4(),
-            name="Product B",
+            name=random_product_name(),
             price=20.99,
             inventory_count=50,
             sku=faker.unique.ean(length=8)
         )
         product3 = Product(
             id=uuid.uuid4(),
-            name="Product C",
+            name=random_product_name(),
             price=15.99,
             inventory_count=75,
             sku=faker.unique.ean(length=8)
@@ -89,9 +106,12 @@ def seed_database():
         db.commit()
 
         # Seed order items
-        order_item1 = OrderItem(order_id=order1.id, product_id=product1.id, quantity=2, unit_price=product1.price, product_display_name=product1.name)
-        order_item2 = OrderItem(order_id=order1.id, product_id=product2.id, quantity=1, unit_price=product2.price, product_display_name=product2.name)
-        order_item3 = OrderItem(order_id=order2.id, product_id=product3.id, quantity=3, unit_price=product3.price, product_display_name=product3.name)
+        order_item1 = OrderItem(order_id=order1.id, product_id=product1.id, quantity=2, unit_price=product1.price,
+                                product_display_name=product1.name)
+        order_item2 = OrderItem(order_id=order1.id, product_id=product2.id, quantity=1, unit_price=product2.price,
+                                product_display_name=product2.name)
+        order_item3 = OrderItem(order_id=order2.id, product_id=product3.id, quantity=3, unit_price=product3.price,
+                                product_display_name=product3.name)
         db.add_all([order_item1, order_item2, order_item3])
         db.commit()
 
