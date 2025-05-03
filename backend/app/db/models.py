@@ -29,6 +29,7 @@ class Product(Base):
     price = Column(Float, nullable=False)
     sku = Column(String(50), unique=True, nullable=False)
     inventory_count = Column(Integer, default=0)
+    deleted = Column(Boolean, default=False)
 
 
 class Order(Base):
