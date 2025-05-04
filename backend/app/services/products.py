@@ -33,8 +33,9 @@ class ProductService:
 
     def delete_product(self, product_id: UUID) -> None:
         product = self.get_product(product_id)
-        self.db.delete(product)
+        product.deleted = True
         self.db.commit()
+        self.db.refresh(product)
 
     def list_products(self) -> list[Product]:
         return self.db.query(Product).filter(Product.deleted == False).all()
