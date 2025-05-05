@@ -1,0 +1,30 @@
+:root {
+    --font-family: Arial, sans-serif;
+    --padding-base: 20px;
+    --input-padding: 8px;
+    --input-margin: 10px 0;
+    --button-padding: 10px;
+    --max-width: 500px;
+    --full-width: 100%;
+}
+
+body {
+    font-family: var(--font-family), sans-serif;
+    padding: var(--padding-base);
+    max-width: var(--max-width);
+    margin: auto;
+}
+
+input {
+    display: block;
+    margin: var(--input-margin);
+    padding: var(--input-padding);
+    width: var(--full-width);
+    box-sizing: border-box;
+}
+
+button {
+    margin-top: var(--input-padding);
+    padding: var(--button-padding);
+    width: var(--full-width);
+}
