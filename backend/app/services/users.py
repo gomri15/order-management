@@ -48,7 +48,7 @@ class UserService:
         return self.db.query(User).filter(User.email == email).first() is not None
 
     def get_users(self, skip: int = 0, limit: int = 100) -> list[User]:
-        return self.db.query(User).offset(skip).limit(limit).all()
+        return self.db.query(User).filter(User.deleted == False).offset(skip).limit(limit).all()
 
     def delete_user(self, user_id):
         user_to_delete = self.db.query(User).filter(User.id == user_id).first()
