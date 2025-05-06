@@ -161,12 +161,12 @@ To use the prebuilt dashboard:
 5. Go to **Resources → Create new**
     - Choose **REST API**
     - Name it whatever you like, below is an example of the configuration
-      ![img.png](docs/img.png)
-      ![img_1.png](docs/img_1.png)
-      ![img_2.png](docs/img_2.png)
-      ![img_3.png](docs/img_3.png)
-      ![img_4.png](docs/img_4.png)
+    - ![img.png](docs/img.png)
+    - ![img_1.png](docs/img_1.png)
+    - ![img_2.png](docs/img_2.png)
+    - ![img_3.png](docs/img_3.png)
 6. Go back to Apps and click View on the imported app
+
 ## Woohoo!?? you should see the app and have full admin functionality
 
 ---
