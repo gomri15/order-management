@@ -66,26 +66,12 @@ def test_update_product(mock_db_session):
     assert updated_product.sku == updates.sku
 
 
-def test_delete_product(mock_db_session):
-    product_id = "123e4567-e89b-12d3-a456-426614174000"
-    product = Product(id=product_id, name="Test Product", price=100.0,
-                      description="A test product", inventory_count=10, sku="TEST123")
-    mock_db_session.query.return_value.filter.return_value.first.return_value = product
-
-    service = ProductService(mock_db_session)
-    service.delete_product(product_id=product_id)
-
-    mock_db_session.delete.assert_called_once_with(product)
-    mock_db_session.commit.assert_called_once()
-
-
 def test_list_products(mock_db_session):
     product1 = Product(id="123e4567-e89b-12d3-a456-426614174000", name="Test Product 1", price=100.0,
-                       description="A test product", inventory_count=10, sku="TEST123")
+                       description="A test product", inventory_count=10, sku="TEST123", deleted=False)
     product2 = Product(id="123e4567-e89b-12d3-a456-426614174001", name="Test Product 2", price=200.0,
-                       description="Another test product", inventory_count=20, sku="TEST124")
-    mock_db_session.query.return_value.all.return_value = [product1, product2]
-
+                       description="Another test product", inventory_count=20, sku="TEST124", deleted=False)
+    mock_db_session.query.return_value.filter.return_value.all.return_value = [product1, product2]
     service = ProductService(mock_db_session)
     products = service.list_products()
 

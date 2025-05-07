@@ -1,7 +1,7 @@
 import uuid
 from fastapi.testclient import TestClient
 from app.main import app
-from app.tests.intergration.conftest import auth_header
+from app.tests.integration.conftest import auth_header
 
 client = TestClient(app)
 

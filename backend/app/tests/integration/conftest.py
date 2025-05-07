@@ -1,5 +1,3 @@
-
-
 import random
 import string
 from uuid import uuid4
