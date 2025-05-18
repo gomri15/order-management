@@ -1,159 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8"/>
+    <meta charset="UTF-8" />
     <title>My Orders</title>
     <link rel="stylesheet" href="css/styles.css">
-    <style>
-        .modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 1; /* Sit on top */
-            padding-top: 100px; /* Location of the box */
-            left: 0;
-            top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgb(0, 0, 0); /* Fallback color */
-            background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
-        }
-
-        /* Modal Content */
-        .modal-content {
-            background-color: #fefefe;
-            margin: auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-        }
-
-        /* The Close Button */
-        .close {
-            color: #aaaaaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .close:hover,
-        .close:focus {
-            color: #000;
-            text-decoration: none;
-            cursor: pointer;
-        }
-    </style>
+    <link rel="stylesheet" href="css/model.css">
 
 </head>
 <div id="navbar"></div>
+
 <body>
-<h1>My Orders</h1>
+    <h1>My Orders</h1>
 
-<ul id="orders-list"></ul>
-<div id="myModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <p id="modal-text">Some text in the Modal.</p>
+    <ul id="orders-list"></ul>
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p id="modal-text">Some text in the Modal.</p>
+        </div>
     </div>
-</div>
+    <script src="./js/navBar.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/ordersPage.js" type="module"></script>
 </body>
-<script src="js/utils.js"></script>
-<script type="module">
-    import {fetchWithAuth} from "./js/fetchWithAuth.js";
 
-    const token = getToken();
-
-    document.addEventListener("DOMContentLoaded", () => {
-        fetch("nav.html")
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById("navbar").innerHTML = data;
-            })
-            .catch(error => console.error('Error loading navbar:', error));
-    });
-
-    async function getOrderItems(order) {
-        const orderItems = await fetchWithAuth(`/api/orders/${order.id}/items/`, token)
-        return orderItems.map(item => ({
-            name: item.product_display_name,
-            unit_price: item.unit_price,
-            quantity: item.quantity
-        }));
-    }
-
-    async function renderOrderItems(order) {
-        const orderItems = await getOrderItems(order);
-
-        const productListElement = document.createElement("ul");
-        productListElement.innerHTML = "";
-        orderItems.map((item) => {
-            const li = document.createElement("li");
-            li.textContent = `${item.name} - $${item.unit_price.toFixed(2)} (x${item.quantity})`;
-            productListElement.appendChild(li);
-        });
-        return productListElement;
-    }
-
-    async function createDetailsButton(order) {
-        const modal = document.getElementById("myModal");
-        const span = document.getElementsByClassName("close")[0];
-        const button = document.createElement("button");
-        const modalText = document.getElementById("modal-text");
-
-        button.textContent = "Details";
-        button.onclick = async () => {
-            const productList = await renderOrderItems(order);
-            modal.style.display = "block";
-            modalText.innerHTML = `
-                <h2>Order #${order.id}</h2>
-                <p>Status: ${order.status_id}</p>
-                <p>Products: </p>
-                <div>${productList.outerHTML}</div>
-                <p>Total Price: $${order.total_price.toFixed(2)}</p>
-                <p>Created At: ${new Date(order.created_at).toLocaleString()}</p>
-                <p>Shipping Address: ${order.shipping_address}</p>
-            `
-        }
-        span.onclick = () => {
-            modal.style.display = "none";
-        }
-
-        window.onclick = (event) => {
-            if (event.target === modal) {
-                modal.style.display = "none";
-            }
-        }
-        return button;
-    }
-
-    async function loadOrders() {
-        const list = document.getElementById("orders-list");
-
-        try {
-            const res = await fetch("/api/orders/", {
-                headers: {Authorization: `Bearer ${token}`}
-            });
-
-            if (!res.ok) throw new Error("Failed to fetch orders");
-
-            const orders = await res.json();
-
-            for (const order of orders) {
-                const li = document.createElement("li");
-                const button = await createDetailsButton(order);
-
-                li.textContent = `Order #${order.id} — Status: ${order.status_id}`;
-                li.appendChild(button);
-                list.appendChild(li);
-            }
-
-        } catch (err) {
-            const li = document.createElement("li");
-            li.textContent = "Error: " + err.message;
-            list.appendChild(li);
-        }
-    }
-
-    window.onload = loadOrders;
-</script>
 </html>
